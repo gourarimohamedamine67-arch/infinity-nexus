@@ -2,9 +2,25 @@ extends CharacterBody3D
 
 const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
+const MOUSE_SENSITIVITY = 0.003
+
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var spring_arm = $SpringArm3D
+
+var camera_x_rotation = 0.0
+
+func _ready():
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _input(event):
+	if event is InputEventMouseMotion:
+		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
+		camera_x_rotation -= event.relative.y * MOUSE_SENSITIVITY
+		camera_x_rotation = clamp(camera_x_rotation, -0.8, 0.4)
+		spring_arm.rotation.x = camera_x_rotation
+	if event.is_action_pressed("ui_cancel"):
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _physics_process(delta):
 	if not is_on_floor():
