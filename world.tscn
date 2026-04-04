@@ -1,26 +1,13 @@
 [gd_scene format=3 uid="uid://btnxqljiy1675"]
 
 [ext_resource type="Script" uid="uid://mgv32l8n4uca" path="res://player.gd" id="1_f3sb7"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_gv5m4"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_f3sb7"]
-size = Vector3(20, 0.1, 20)
+[ext_resource type="Script" uid="uid://dltaw2g1wx6sv" path="res://terrain.gd" id="2_fj7yv"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_gv5m4"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_f3sb7"]
 
 [node name="World" type="Node3D" unique_id=1565654956]
-
-[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=296288743]
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1754430585]
-transform = Transform3D(20, 0, 0, 0, 0.1, 0, 0, 0, 20, 0, 0, 0)
-mesh = SubResource("BoxMesh_gv5m4")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=851986273]
-shape = SubResource("BoxShape3D_f3sb7")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1958423386]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8236547, 1.9767182, 1.950953)
@@ -40,3 +27,10 @@ spring_length = 6.0
 
 [node name="Camera3D" type="Camera3D" parent="Player/SpringArm3D" unique_id=1356037121]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="Terrain" type="MeshInstance3D" parent="." unique_id=1237155095]
+script = ExtResource("2_fj7yv")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Terrain" unique_id=569921300]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain/StaticBody3D" unique_id=1957288155]
