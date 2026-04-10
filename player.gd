@@ -7,7 +7,7 @@ const MOUSE_SENSITIVITY = 0.003
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var spring_arm = $SpringArm3D
-
+@onready var anim_player = $zlorp/AnimationPlayer
 var camera_x_rotation = 0.0
 
 func _ready():
@@ -32,9 +32,11 @@ func _physics_process(delta):
 	if direction:
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
+		anim_player.play("Take 001")
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
+		anim_player.play("Take 001")
 	move_and_slide()
 
 func _process(delta):
