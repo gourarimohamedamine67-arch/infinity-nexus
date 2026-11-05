@@ -1,5 +1,8 @@
 extends CharacterBody3D
+## Joueur : déplacement (ZQSD/flèches), course (Shift), saut (Espace), caméra à la souris,
+## et animations de Zlorp (idle, marche, course, saut) tirées des FBX Mixamo.
 
+# --- Réglages ---
 const SPEED = 5.0
 const RUN_SPEED = 8.0        # vitesse en courant (Shift)
 const RUN_ANIM_SPEED = 1.3   # l'anim Running est prévue pour ~2,6 m/s : on l'accélère un peu
@@ -8,22 +11,23 @@ const MOUSE_SENSITIVITY = 0.003
 const TURN_SPEED = 10.0      # vitesse de rotation de Zlorp vers la direction du mouvement
 const ANIM_BLEND = 0.2       # durée du fondu entre deux animations (secondes)
 
+# --- Animations (librairie "zlorp" construite au lancement) ---
 const IDLE_ANIM = "zlorp/idle"
 const WALK_ANIM = "zlorp/walk"
 const RUN_ANIM = "zlorp/run"
 const JUMP_ANIM = "zlorp/jump"
 const HIPS_POS = "Skeleton3D:mixamorig1_Hips"
 
-var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var spring_arm = $SpringArm3D
 @onready var zlorp = $zlorp
 @onready var anim_player: AnimationPlayer = $zlorp/AnimationPlayer
 
-var camera_x_rotation = 0.0
-var jumping = false
-var jump_start_time = 0.0    # moment de l'anim où Zlorp est le plus accroupi (impulsion)
-var jump_anim_speed = 1.0    # vitesse pour caler le sommet de l'anim sur le sommet du saut
+var camera_x_rotation := 0.0   # inclinaison verticale de la caméra (radians)
+var jumping := false
+var jump_start_time := 0.0     # moment de l'anim où Zlorp est le plus accroupi (impulsion)
+var jump_anim_speed := 1.0     # vitesse pour caler le sommet de l'anim sur le sommet du saut
 
 func _ready():
 	add_to_group("player")  # les portails reconnaissent le joueur par ce groupe
@@ -33,6 +37,9 @@ func _ready():
 	_setup_animations()
 	anim_player.play(IDLE_ANIM)
 
+# --- Préparation des animations ---
+
+## Copie les anims Mixamo dans une librairie "zlorp", en boucle et sans root motion.
 func _setup_animations():
 	var lib = AnimationLibrary.new()
 
@@ -97,6 +104,8 @@ func _compute_jump_timing(anim: Animation):
 	var physics_rise = JUMP_VELOCITY / gravity
 	if anim_rise > 0.0:
 		jump_anim_speed = anim_rise / physics_rise
+
+# --- Contrôles ---
 
 func _input(event):
 	# Clic dans la fenêtre : on reprend la souris

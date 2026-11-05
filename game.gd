@@ -65,7 +65,7 @@ func get_world_data(seed_value: int) -> WorldData:
 	return known_worlds[seed_value]
 
 func _physics_process(_delta):
-	# Filet de sécurité : si le joueur tombe hors du monde, on le repose au point d'arrivée
+	# Filet de sécurité (normalement inutile grâce aux crêtes et murs du terrain) : si le joueur tombe hors du monde, on le repose au point d'arrivée
 	if not traveling and player.global_position.y < get_ground_height(arrival_spot.x, arrival_spot.y) - FALL_LIMIT:
 		place_player(arrival_spot)
 
@@ -81,13 +81,16 @@ func get_ground_height(x: float, z: float) -> float:
 		return 0.0
 	return terrain.get_global_height(x, z)
 
+# --- Fondu au noir (usage : await fade_out()) ---
+
+## Assombrit l'écran jusqu'au noir.
 func fade_out() -> Signal:
 	return _fade_to(1.0)
 
+## Révèle l'écran depuis le noir.
 func fade_in() -> Signal:
 	return _fade_to(0.0)
 
-# Usage : await fade_out()
 func _fade_to(alpha: float) -> Signal:
 	var tween = create_tween()
 	tween.tween_property(fade_rect, "color:a", alpha, FADE_TIME)

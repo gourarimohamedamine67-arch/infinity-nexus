@@ -10,22 +10,23 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 
 ## Roadmap
 1. Fondations ✅ (terminée le 2026-11-05)
-2. Le Nexus : portails et téléportation (en cours)
+2. Le Nexus : portails et téléportation ✅ (validée le 2026-11-05 ; branche `nuit` en test)
 3. Gameplay : craft, inventaire, ennemis
 4. Vie du monde : événements, persistance, sauvegardes
 5. Multijoueur
 6. Polish
 
-## État actuel (phase 1 terminée)
+## État actuel (phases 1 et 2 terminées)
 - game.tscn (scène principale) : Player persistant + mondes chargés dans $World + fondu au noir
-- player.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches)
+- player.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches, course Shift)
 - Caméra orbitale SpringArm3D, souris capturée, Échap pour libérer, clic pour reprendre
 - Terrain procédural SurfaceTool + FastNoiseLite (graine), dégradé de couleur selon la hauteur, collision ConcavePolygonShape3D
 - Ciel sci-fi WorldEnvironment + ProceduralSkyMaterial bleu/violet
-- Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking/Jump avec fondu
+- Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking/Running/Jump avec fondu
 - Portail Nexus : aller-retour entre le monde d'origine et des mondes procéduraux (graine), fondu au noir
-- Filet de sécurité : si le joueur tombe à plus de 15 m sous le sol, il est reposé au point d'arrivée
-- Prochaine étape : test de l'étape 5 de la phase 2, puis plan de la phase 3
+- Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
+- Son de portail généré par le code (sfx.gd), aucun fichier audio
+- Prochaine étape : Amine tranche PHASE3_QUESTIONS.md, puis plan de la phase 3
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
@@ -58,9 +59,10 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 - `worlds/origin.tres` : le monde d'origine, réglable dans l'inspecteur
 - `portal.tscn` / `portal.gd` : Portal → Ring (TorusMesh émissif), Swirl (QuadMesh + `portal_swirl.gdshader`), Particles, OmniLight3D, TriggerZone (Area3D → game.travel_through). `destination_seed` = monde visé. Origine = base au sol, centre de l'anneau à 1,6 m, face vers +Z. Se pose seul sur le terrain (`snap_to_ground`)
 - `player.tscn` : Player → zlorp, capsule, SpringArm3D/Camera3D
-- `player.gd` : déplacement (actions move_forward/back/left/right, jump), saut, caméra souris, animations Zlorp
+- `player.gd` : déplacement (actions move_forward/back/left/right, sprint, jump), course 8 m/s (anim Running ×1,3), saut, caméra souris, animations Zlorp
 - Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches
-- `terrain.gd` (@tool) : exports world_seed, size, resolution, amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` = hauteur locale, `get_global_height(x, z)` = y global du sol. Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde). Couleurs de sommets en sRGB (`vertex_color_is_srgb`, sinon délavées) et dégradé creux→sommets en teinte HSV (un mélange RGB de couleurs opposées passe par le gris)
+- `sfx.gd` : sons synthétisés (`portal_whoosh()` → AudioStreamWAV), chargé par `preload` (pas de class_name)
+- `terrain.gd` (@tool) : exports world_seed, size (160), resolution (80), rim_width/rim_height (crêtes du bord), amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` = hauteur locale, `get_global_height(x, z)` = y global du sol, `get_playable_half_size()` = zone sans les crêtes. Murs invisibles (`Bounds`) créés en jeu seulement. Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde). Couleurs de sommets en sRGB (`vertex_color_is_srgb`, sinon délavées) et dégradé creux→sommets en teinte HSV (un mélange RGB de couleurs opposées passe par le gris)
 - `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans player.tscn)
 - `assets/characters/` : Idle.fbx (modèle + skin), Walking/Running/Jumping/Running Jump.fbx (animations)
 - Git LFS suit *.fbx et *.png (.gitattributes). GitHub refuse les fichiers > 100 Mo hors LFS
