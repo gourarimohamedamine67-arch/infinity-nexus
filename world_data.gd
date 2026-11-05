@@ -29,6 +29,11 @@ extends Resource
 @export_range(-90.0, 0.0) var sun_pitch_deg: float = -50.0  ## -90 = soleil au zénith
 @export_range(-180.0, 180.0) var sun_yaw_deg: float = 30.0
 
+@export_group("Jour et nuit")
+@export var day_length_s: float = 480.0         ## durée d'un cycle complet (s) ; 0 = soleil fixe
+@export_range(0.0, 1.0) var start_time: float = 0.3  ## 0-0,5 = jour (0,25 = midi), 0,5-1 = nuit
+@export_range(0.0, 0.05) var star_density: float = 0.012
+
 const GOLDEN_RATIO = 0.618034
 ## Décalage de teinte des sommets par rapport au ciel : [nom, décalage]
 const SCHEMES = [
@@ -71,4 +76,12 @@ static func generate(seed_value: int) -> WorldData:
 	d.sun_energy = lerp(0.6, 1.3, brightness)
 	d.sun_pitch_deg = rng.randf_range(-65.0, -30.0)
 	d.sun_yaw_deg = rng.randf_range(-180.0, 180.0)
+
+	# Cycle lent (6 à 10 min) ; 70 % des mondes commencent de jour
+	d.day_length_s = rng.randf_range(360.0, 600.0)
+	if rng.randf() < 0.7:
+		d.start_time = rng.randf_range(0.08, 0.42)
+	else:
+		d.start_time = rng.randf_range(0.58, 0.92)
+	d.star_density = rng.randf_range(0.006, 0.02)
 	return d
