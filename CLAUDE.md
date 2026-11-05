@@ -21,11 +21,13 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - player.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches, course Shift)
 - Caméra orbitale SpringArm3D, souris capturée, Échap pour libérer, clic pour reprendre
 - Terrain procédural SurfaceTool + FastNoiseLite (graine), dégradé de couleur selon la hauteur, collision ConcavePolygonShape3D
-- Ciel sci-fi WorldEnvironment + ProceduralSkyMaterial bleu/violet
+- Ciel : shader `sky.gdshader` (dégradé jour/nuit, soleil, étoiles, lune), cycle jour/nuit lent (6-10 min)
+- Météo par monde (pluie, neige, brume ou rien) ; rochers et cristaux lumineux procéduraux avec collision
 - Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking/Running/Jump avec fondu
 - Portail Nexus : aller-retour entre le monde d'origine et des mondes procéduraux (graine), fondu au noir
 - Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
 - Son de portail généré par le code (sfx.gd), aucun fichier audio
+- Branche `nuit` (travail de nuit du 2026-11-05, en attente de test/fusion par Amine) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
 - Prochaine étape : Amine tranche PHASE3_QUESTIONS.md, puis plan de la phase 3
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
@@ -54,13 +56,16 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
   - `get_world_data(seed)` : graine 0 = `worlds/origin.tres`, sinon `WorldData.generate(seed)` ; mis en cache dans `known_worlds`
   - `enter_world(seed, return_seed)` remplace le monde et pose le joueur devant le portail ; `travel_through(portal)` = fondu + changement de monde (délai anti-boucle 1 s) ; `get_ground_height(x, z)` ; `await fade_out()` / `await fade_in()`
   - Groupes : "game" (Game), "player" (Player), "terrain" (Terrain du monde actuel)
-- `world.tscn` / `world.gd` : modèle de monde (pas de joueur dedans), configuré par `setup(world_data, return_seed)` AVANT add_child (applique terrain, ciel, soleil). Les valeurs de la .tscn ne servent que de défaut. L'Environment est dupliqué avant modification (sinon partagé entre instances). → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment, Portal (0, 0, -10)
-- `world_data.gd` (class_name WorldData, Resource) : world_seed, display_name, terrain (amplitude, frequency, octaves, couleurs), ciel, soleil (couleur, énergie, angles). `WorldData.generate(seed)` = monde procédural déterministe : teinte de base = graine × nombre d'or (graines voisines bien différentes), sol saturé dans la teinte du ciel, sommets selon un schéma (Analogue, Décalé, Triadique, Complémentaire), luminosité nuit→jour, brouillard couleur horizon, soleil teinté comme le ciel
+- `world.tscn` / `world.gd` : modèle de monde (pas de joueur dedans), configuré par `setup(world_data, return_seed)` AVANT add_child (applique terrain, ciel, soleil). `_ready` crée la lune, le décor et la météo ; `_process` fait avancer `time_of_day` (0-0,5 jour, 0,5-1 nuit), ciel mis à jour 4×/s (Sky en mode incrémental, radiance 128), ombres du soleil limitées à 80 m. Les valeurs de la .tscn ne servent que de défaut. L'Environment est dupliqué avant modification (sinon partagé entre instances). → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment, Portal (0, 0, -10)
+- `world_data.gd` (class_name WorldData, Resource) : world_seed, display_name, terrain (amplitude, frequency, octaves, couleurs), ciel, brouillard, soleil, jour/nuit (day_length_s, start_time, star_density), météo (0 aucune, 1 pluie, 2 neige, 3 brume), décor (rock_count, crystal_count, couleurs). `WorldData.generate(seed)` = monde procédural déterministe : teinte de base = graine × nombre d'or (graines voisines bien différentes), sol saturé dans la teinte du ciel, sommets selon un schéma (Analogue, Décalé, Triadique, Complémentaire), luminosité nuit→jour, brouillard couleur horizon, soleil teinté comme le ciel
 - `worlds/origin.tres` : le monde d'origine, réglable dans l'inspecteur
 - `portal.tscn` / `portal.gd` : Portal → Ring (TorusMesh émissif), Swirl (QuadMesh + `portal_swirl.gdshader`), Particles, OmniLight3D, TriggerZone (Area3D → game.travel_through). `destination_seed` = monde visé. Origine = base au sol, centre de l'anneau à 1,6 m, face vers +Z. Se pose seul sur le terrain (`snap_to_ground`)
 - `player.tscn` : Player → zlorp, capsule, SpringArm3D/Camera3D
 - `player.gd` : déplacement (actions move_forward/back/left/right, sprint, jump), course 8 m/s (anim Running ×1,3), saut, caméra souris, animations Zlorp
 - Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches
+- `sky.gdshader` : ciel jour/nuit (uniforms day_*/night_*, night, moon_dir, star_density) ; la lune (DirectionalLight3D) est en `SKY_MODE_LIGHT_ONLY` pour ne pas être dessinée comme un 2e soleil
+- `weather.gd` : GPUParticles3D pluie/neige qui suit le joueur (local_coords = false), enum Kind
+- `decor.gd` : `scatter(world, data, terrain)` → MultiMesh « Rocks » et « Crystals » + StaticBody3D « DecorBody » (cylindres, pas de collision mise à l'échelle). Max ~220 objets. Rien à moins de 7 m du segment (0,0)→(0,-10)
 - `sfx.gd` : sons synthétisés (`portal_whoosh()` → AudioStreamWAV), chargé par `preload` (pas de class_name)
 - `terrain.gd` (@tool) : exports world_seed, size (160), resolution (80), rim_width/rim_height (crêtes du bord), amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` = hauteur locale, `get_global_height(x, z)` = y global du sol, `get_playable_half_size()` = zone sans les crêtes. Murs invisibles (`Bounds`) créés en jeu seulement. Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde). Couleurs de sommets en sRGB (`vertex_color_is_srgb`, sinon délavées) et dégradé creux→sommets en teinte HSV (un mélange RGB de couleurs opposées passe par le gris)
 - `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans player.tscn)
@@ -71,3 +76,6 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 - Nouveau `class_name` : en headless, lancer d'abord `--headless --import` pour l'enregistrer dans le cache des classes, sinon « Could not find type »
 - Ne jamais tuer Godot par nom de processus (`taskkill /IM`) : ça fermerait aussi l'éditeur d'Amine. Toujours mettre un `timeout` aux tests headless
 - Avertissements GDScript : interroger le LSP de l'éditeur ouvert (port 6005, textDocument/didOpen → publishDiagnostics)
+- En headless, le rendu factice ne garde pas les transforms des MultiMesh (tout à l'origine) : tester le décor avec rendu (sans --headless)
+- Mesurer le FPS avec `DisplayServer.window_set_vsync_mode(VSYNC_DISABLED)`, sinon plafonné/faussé. Référence 1280×720 GPU intégré AMD : ~70 FPS jour, ~90 FPS nuit
+- Scripts utilitaires sans class_name (sfx, weather, decor) : chargés par `preload`, pas besoin de --import
