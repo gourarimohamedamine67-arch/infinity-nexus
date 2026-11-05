@@ -17,7 +17,8 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 6. Polish
 
 ## État actuel (phase 1 terminée)
-- world.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches)
+- game.tscn (scène principale) : Player persistant + mondes chargés dans $World + fondu au noir
+- player.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches)
 - Caméra orbitale SpringArm3D, souris capturée, Échap pour libérer, clic pour reprendre
 - Terrain procédural SurfaceTool + FastNoiseLite (graine), dégradé de couleur selon la hauteur, collision ConcavePolygonShape3D
 - Ciel sci-fi WorldEnvironment + ProceduralSkyMaterial bleu/violet
@@ -26,7 +27,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
-2. game.tscn racine : Player persistant + nœud World où on charge les mondes + écran de fondu
+2. ✅ game.tscn racine : Player persistant + nœud World où on charge les mondes + écran de fondu
 3. portal.tscn : anneau + shader tourbillon + particules + lumière
 4. Téléportation : Area3D, fondu, génération du monde destination (autre graine/ciel), joueur posé au sol près du portail retour, délai anti-boucle
 5. Ressource WorldData (graine, couleurs) + MAJ CLAUDE.md
@@ -44,12 +45,15 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 - Modèle de base « with skin », animations « without skin »
 
 ## Structure du projet
-- `project.godot` : scène principale = world.tscn, physique Jolt, rendu Forward+ (D3D12)
-- `world.tscn` : World → DirectionalLight3D, Player (script player.gd), Terrain (script terrain.gd), WorldEnvironment
+- `project.godot` : scène principale = game.tscn, physique Jolt, rendu Forward+ (D3D12)
+- `game.tscn` / `game.gd` : Game → World (conteneur du monde actuel), Player (player.tscn), Fade (CanvasLayer + ColorRect noir)
+  - `load_world(scene, Vector2(x, z))` remplace le monde et pose le joueur au sol ; `get_ground_height(x, z)` ; `await fade_out()` / `await fade_in()`
+- `world.tscn` : premier monde (pas de joueur dedans) → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment
+- `player.tscn` : Player → zlorp, capsule, SpringArm3D/Camera3D
 - `player.gd` : déplacement (actions move_forward/back/left/right, jump), saut, caméra souris, animations Zlorp
 - Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches
 - `terrain.gd` (@tool) : exports world_seed, size, resolution, amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` donne la hauteur du sol (coordonnées locales). Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde)
-- `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans world.tscn)
+- `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans player.tscn)
 - `assets/characters/` : Idle.fbx (modèle + skin), Walking/Running/Jumping/Running Jump.fbx (animations)
 - Git LFS suit *.fbx et *.png (.gitattributes). GitHub refuse les fichiers > 100 Mo hors LFS
 - Si des .fbx/.png font ~130 octets, ce sont des pointeurs LFS : lancer `git lfs checkout` (sinon Godot écrit valid=false dans les .import)

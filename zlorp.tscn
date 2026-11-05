@@ -4,7 +4,7 @@
 
 [node name="Idle" unique_id=860511177 instance=ExtResource("1_e3hhy")]
 
-[node name="Skeleton3D" parent="." index="0" unique_id=1686165437]
+[node name="Skeleton3D" parent="." index="0" unique_id=1740507200]
 bones/1/rotation = Quaternion(-0.04931088, 0, 0, 0.99878347)
 bones/4/rotation = Quaternion(0.04931085, 0, 0, 0.9987835)
 bones/9/rotation = Quaternion(-0.08936102, -0.0063471696, 0.07056502, 0.9934763)

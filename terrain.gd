@@ -23,6 +23,7 @@ extends MeshInstance3D
 var noise := FastNoiseLite.new()
 
 func _ready():
+	add_to_group("terrain")  # pour que game.gd et les portails trouvent le sol
 	generate_terrain()
 
 func _regenerate():
