@@ -9,26 +9,28 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Après une modif, me dire quoi tester dans Godot.
 
 ## Roadmap
-1. Fondations (en cours)
-2. Le Nexus : portails et téléportation
+1. Fondations ✅ (terminée le 2026-11-05)
+2. Le Nexus : portails et téléportation (en cours)
 3. Gameplay : craft, inventaire, ennemis
 4. Vie du monde : événements, persistance, sauvegardes
 5. Multijoueur
 6. Polish
 
-## État actuel (phase 1)
+## État actuel (phase 1 terminée)
 - world.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches)
 - Caméra orbitale SpringArm3D, souris capturée, Échap pour libérer, clic pour reprendre
 - Terrain procédural SurfaceTool (sin/cos), collision ConcavePolygonShape3D
 - Ciel sci-fi WorldEnvironment + ProceduralSkyMaterial bleu/violet
-- Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking avec fondu
+- Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking/Jump avec fondu
 - Prochaine étape : le premier portail Nexus (phase 2)
 
 ## Pièges Mixamo connus
 - Échelle : l'importeur FBX de Godot 4.6 convertit déjà les cm en mètres (Zlorp = 1,77 m en scale 1). Ne PAS mettre 0.01
-- Noms d'anims à l'import : "Take 001" et/ou "mixamo_com" (Walking.fbx n'a que "mixamo_com")
-- Les anims s'importent sans boucle : player.gd les copie dans la librairie "zlorp" (zlorp/idle, zlorp/walk) en LOOP_LINEAR
-- Les anims de marche Mixamo avancent les hanches (root motion) : player.gd bloque X/Z de mixamorig1_Hips (sinon télécharger en « In Place »)
+- La bonne anim est toujours "mixamo_com". Dans Idle.fbx, "Take 001" = T-pose (1 clé égale à la pose de repos), à ne pas utiliser
+- Vérifier une anim = vérifier la pose du squelette (ex. angle du bras vs pose de repos), pas seulement le nom de l'anim jouée
+- Les anims s'importent sans boucle : player.gd les copie dans la librairie "zlorp" (zlorp/idle, zlorp/walk en LOOP_LINEAR, zlorp/jump sans boucle)
+- Les anims Mixamo déplacent les hanches (root motion) : player.gd bloque X/Z de mixamorig1_Hips (sinon télécharger en « In Place »)
+- Jumping.fbx dure 2,37 s (accroupi → saut → réception) contre ~0,9 s de saut physique : player.gd démarre l'anim au point le plus accroupi et cale son sommet sur celui du saut
 - Les modèles Mixamo regardent vers +Z (Godot vise -Z) : angle = atan2(dir.x, dir.z)
 - Os nommés mixamorig1_* ; origine du Player aux pieds, capsule décalée de +1 m
 - AnimationPlayer : $zlorp/AnimationPlayer (pas $zlorp/Idle/AnimationPlayer)
