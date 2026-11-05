@@ -1,6 +1,8 @@
 extends CharacterBody3D
 
 const SPEED = 5.0
+const RUN_SPEED = 8.0        # vitesse en courant (Shift)
+const RUN_ANIM_SPEED = 1.3   # l'anim Running est prévue pour ~2,6 m/s : on l'accélère un peu
 const JUMP_VELOCITY = 4.5
 const MOUSE_SENSITIVITY = 0.003
 const TURN_SPEED = 10.0      # vitesse de rotation de Zlorp vers la direction du mouvement
@@ -8,6 +10,7 @@ const ANIM_BLEND = 0.2       # durée du fondu entre deux animations (secondes)
 
 const IDLE_ANIM = "zlorp/idle"
 const WALK_ANIM = "zlorp/walk"
+const RUN_ANIM = "zlorp/run"
 const JUMP_ANIM = "zlorp/jump"
 const HIPS_POS = "Skeleton3D:mixamorig1_Hips"
 
@@ -42,6 +45,10 @@ func _setup_animations():
 	var walk = _load_mixamo_anim("res://assets/characters/Walking.fbx")
 	walk.loop_mode = Animation.LOOP_LINEAR
 	lib.add_animation("walk", walk)
+
+	var run = _load_mixamo_anim("res://assets/characters/Running.fbx")
+	run.loop_mode = Animation.LOOP_LINEAR
+	lib.add_animation("run", run)
 
 	var jump = _load_mixamo_anim("res://assets/characters/Jumping.fbx")
 	jump.loop_mode = Animation.LOOP_NONE
@@ -118,9 +125,11 @@ func _physics_process(delta):
 		anim_player.seek(jump_start_time, true)
 	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	var running = direction != Vector3.ZERO and Input.is_action_pressed("sprint")
 	if direction:
-		velocity.x = direction.x * SPEED
-		velocity.z = direction.z * SPEED
+		var speed = RUN_SPEED if running else SPEED
+		velocity.x = direction.x * speed
+		velocity.z = direction.z * speed
 		# Les modèles Mixamo regardent vers +Z : l'angle cible est atan2(x, z)
 		var target_yaw = atan2(direction.x, direction.z)
 		zlorp.global_rotation.y = lerp_angle(zlorp.global_rotation.y, target_yaw, TURN_SPEED * delta)
@@ -128,7 +137,12 @@ func _physics_process(delta):
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
 	if not jumping:
-		_play(WALK_ANIM if direction else IDLE_ANIM)
+		if running:
+			_play(RUN_ANIM, RUN_ANIM_SPEED)
+		elif direction:
+			_play(WALK_ANIM)
+		else:
+			_play(IDLE_ANIM)
 	move_and_slide()
 
 ## Tourne caméra et Zlorp vers la direction dir (horizontale), ex. à la sortie d'un portail.
@@ -138,6 +152,6 @@ func face(dir: Vector3):
 	camera_x_rotation = 0.0
 	spring_arm.rotation.x = 0.0
 
-func _play(anim_name: String):
+func _play(anim_name: String, speed: float = 1.0):
 	if anim_player.current_animation != anim_name:
-		anim_player.play(anim_name, ANIM_BLEND)
+		anim_player.play(anim_name, ANIM_BLEND, speed)
