@@ -25,6 +25,10 @@ func setup(world_data: WorldData, return_seed: int = -1):
 	sky_mat.sky_horizon_color = data.sky_horizon
 	sky_mat.ground_horizon_color = data.sky_horizon
 	sky_mat.ground_bottom_color = data.ground_bottom
+	env.fog_enabled = data.fog_density > 0.0
+	env.fog_light_color = data.fog_color
+	env.fog_density = data.fog_density
+	env.fog_sky_affect = 0.3
 
 	var sun: DirectionalLight3D = $DirectionalLight3D
 	sun.rotation_degrees = Vector3(data.sun_pitch_deg, data.sun_yaw_deg, 0)

@@ -73,6 +73,7 @@ func generate_terrain():
 
 	var mat = StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true  # sinon les couleurs sont lues comme linéaires et sortent délavées
 	mat.roughness = 0.9
 	mesh.surface_set_material(0, mat)
 
@@ -84,7 +85,10 @@ func _height_color(y: float) -> Color:
 	var t = 0.5
 	if amplitude > 0.0:
 		t = clamp((y / amplitude + 1.0) / 2.0, 0.0, 1.0)
-	return color_low.lerp(color_high, t)
+	# Dégradé en teinte (HSV) et non en RGB : entre deux couleurs opposées,
+	# un mélange RGB passe par le gris, un mélange de teinte reste vif.
+	var h = fposmod(lerp_angle(color_low.h * TAU, color_high.h * TAU, t) / TAU, 1.0)
+	return Color.from_hsv(h, lerp(color_low.s, color_high.s, t), lerp(color_low.v, color_high.v, t))
 
 # Le terrain est régénéré à chaque chargement : on évite de sauvegarder
 # le mesh et la collision (des centaines de Ko) dans world.tscn.
