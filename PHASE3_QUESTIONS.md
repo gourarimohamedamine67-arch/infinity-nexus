@@ -120,3 +120,73 @@ Coche ton choix (`[x]`) ou écris ta propre réponse sous la question. Mes recom
 - [ ] **Contemplatif** : exploration, beauté des mondes, peu de danger.
 - [ ] **Survie** : ressources rares, ennemis dangereux.
 - [ ] ⭐ **Aventure** : entre les deux, danger modéré.
+
+---
+
+## F. PNJ (personnages non joueurs)
+
+### F1. Les PNJ ont-ils leur place dans le jeu ?
+- [ ] **Non** : le joueur est seul (ou avec d'autres joueurs en phase 5). Ambiance d'exploration solitaire, beaucoup moins de travail.
+- [ ] ⭐ **Oui, peu nombreux et marquants** : quelques personnages (ex. un gardien du Nexus) qui donnent le fil rouge (A1) et des quêtes.
+- [ ] **Oui, des peuples entiers** : chaque monde peut avoir ses habitants générés depuis la graine. Très riche, très coûteux (modèles, IA, dialogues).
+
+### F2. Où vivent-ils ?
+- [ ] ⭐ **Dans un hub** (le monde-carrefour de A3) : un lieu sûr où revenir.
+- [ ] **Dans certains mondes**, en petits villages générés.
+- [ ] **Partout**, en voyageurs croisés au hasard.
+
+### F3. Que font-ils pour le joueur ?
+- [ ] **Commerce** (échanger des ressources, acheter des recettes).
+- [ ] **Quêtes** (aller chercher X dans un monde de telle couleur).
+- [ ] **Compagnons** qui suivent et aident au combat.
+- [ ] **Histoire / ambiance** seulement (dialogues, indices sur le Nexus).
+
+### F4. Comment parle-t-on avec eux ?
+- [ ] **Bulles de texte simples** (une phrase, pas de choix).
+- [ ] ⭐ **Dialogues à choix** (2-3 réponses).
+- [ ] **Dialogues générés** par l'« IA adaptative » (ambitieux, coûteux, à garder pour plus tard).
+
+### F5. Apparence
+- [ ] ⭐ **Personnages Mixamo** (comme Zlorp), recolorés : gratuit et cohérent.
+- [ ] **Créatures générées** (formes simples + couleurs du monde), cohérent avec les mondes procéduraux.
+
+---
+
+## G. Véhicules (au sol)
+
+### G1. Les véhicules ont-ils leur place ?
+- [ ] **Non** : les mondes font 160 m de côté, on les traverse à pied en 30 s ; un véhicule n'apporte rien tant qu'ils restent petits.
+- [ ] ⭐ **Oui, plus tard, si les mondes grandissent** (terrains de plusieurs km ou monde infini par morceaux).
+- [ ] **Oui, dès la phase 3**, comme objet de craft majeur (récompense).
+
+### G2. Sous quelle forme ?
+- [ ] **Monture** (créature qu'on apprivoise) : colle à l'univers multivers et à l'IA adaptative.
+- [ ] **Engin sci-fi** (aéroglisseur, moto à lévitation) : colle à l'ambiance Nexus, facile à animer (pas de roues).
+- [ ] **Véhicule à roues** : physique plus complexe (VehicleBody3D), peu adapté aux collines.
+
+### G3. Peut-on emmener un véhicule à travers un portail ?
+- [ ] **Non**, il reste dans son monde.
+- [ ] **Oui**, il voyage avec le joueur.
+- [ ] **Seuls certains portails (plus grands)** l'acceptent.
+
+---
+
+## H. Vaisseaux spatiaux
+
+### H1. Les vaisseaux ont-ils leur place, alors que les portails font déjà voyager entre les mondes ?
+- [ ] **Non** : les portails *sont* le moyen de voyager ; un vaisseau ferait doublon et coûterait énormément.
+- [ ] ⭐ **Oui, comme objectif de fin de jeu** : construire un vaisseau pour atteindre des mondes sans portail (ou réparer le Nexus).
+- [ ] **Oui, comme moyen de transport central** : changerait la nature du jeu (vol, espace, atterrissages).
+
+### H2. Si oui, que fait-on avec ?
+- [ ] **Voyage seulement** (choisir une destination sur une carte des graines connues), avec une courte cinématique.
+- [ ] **Vol libre au-dessus d'un monde** (survoler le terrain, atterrir où on veut).
+- [ ] **Combats spatiaux** (très gros chantier, à éviter avec un budget zéro).
+
+### H3. Comment l'obtient-on ?
+- [ ] ⭐ **En le fabriquant pièce par pièce** (pièces rares dans des mondes différents) : relie craft, exploration et portails.
+- [ ] **En le trouvant** (épave à réparer dans un monde particulier).
+- [ ] **Dès le départ** (le joueur arrive en vaisseau, crash au début du jeu = fil rouge).
+
+### H4. Échelle de travail (à garder en tête)
+Un vaisseau pilotable demande : un modèle 3D, une physique de vol, une caméra dédiée, des transitions sol/air. Pour un projet à 2 et budget zéro, la version « voyage seulement » (H2, option 1) est 10 fois moins coûteuse que le vol libre.
