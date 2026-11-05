@@ -7,6 +7,7 @@ const FADE_TIME = 0.5
 const ARRIVAL_COOLDOWN = 1.0   ## secondes pendant lesquelles un portail ne peut pas re-téléporter
 const ORIGIN_WORLD: WorldData = preload("res://worlds/origin.tres")
 const FALL_LIMIT = 15.0        ## sous le sol de plus de 15 m (bord du monde) -> retour au point d'arrivée
+const Sfx = preload("res://sfx.gd")
 
 @onready var world_root: Node3D = $World
 @onready var player: CharacterBody3D = $Player
@@ -17,9 +18,14 @@ var traveling := false
 var last_arrival_ms := -100000
 var arrival_spot := Vector2.ZERO
 var known_worlds := {}   ## graine -> WorldData déjà visités (base des sauvegardes, phase 4)
+var portal_sound: AudioStreamPlayer
 
 func _ready():
 	add_to_group("game")     # les portails nous trouvent par ce groupe
+	portal_sound = AudioStreamPlayer.new()
+	portal_sound.stream = Sfx.portal_whoosh()  # son généré par le code, aucun fichier
+	portal_sound.volume_db = -4.0
+	add_child(portal_sound)
 	fade_rect.color.a = 1.0  # on démarre au noir...
 	enter_world(0)
 	fade_in()                # ...puis on révèle le monde
@@ -45,6 +51,7 @@ func travel_through(portal: Node3D):
 		return
 	traveling = true
 	player.set_physics_process(false)   # le joueur ne bouge plus pendant le fondu
+	portal_sound.play()
 	await fade_out()
 	enter_world(portal.destination_seed, current_world.data.world_seed)
 	player.set_physics_process(true)
