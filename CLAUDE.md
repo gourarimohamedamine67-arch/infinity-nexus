@@ -29,7 +29,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
 2. ✅ game.tscn racine : Player persistant + nœud World où on charge les mondes + écran de fondu
 3. ✅ portal.tscn : anneau + shader tourbillon + particules + lumière
-4. Téléportation : Area3D, fondu, génération du monde destination (autre graine/ciel), joueur posé au sol près du portail retour, délai anti-boucle
+4. ✅ Téléportation : Area3D, fondu, génération du monde destination (autre graine/ciel), joueur posé au sol près du portail retour, délai anti-boucle
 5. Ressource WorldData (graine, couleurs) + MAJ CLAUDE.md
 Choix : on entre en marchant dans le portail (pas de touche), destination procédurale, pas de hub tant qu'il n'y a pas 3 mondes
 ## Pièges Mixamo connus
@@ -47,9 +47,10 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 ## Structure du projet
 - `project.godot` : scène principale = game.tscn, physique Jolt, rendu Forward+ (D3D12)
 - `game.tscn` / `game.gd` : Game → World (conteneur du monde actuel), Player (player.tscn), Fade (CanvasLayer + ColorRect noir)
-  - `load_world(scene, Vector2(x, z))` remplace le monde et pose le joueur au sol ; `get_ground_height(x, z)` ; `await fade_out()` / `await fade_in()`
-- `world.tscn` : premier monde (pas de joueur dedans) → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment, Portal (0, 0, -10)
-- `portal.tscn` / `portal.gd` : Portal → Ring (TorusMesh émissif), Swirl (QuadMesh + `portal_swirl.gdshader`), Particles, OmniLight3D. Origine = base au sol, centre de l'anneau à 1,6 m, face vers +Z. Se pose seul sur le terrain (`snap_to_ground`)
+  - `enter_world(seed, return_seed)` remplace le monde et pose le joueur devant le portail ; `travel_through(portal)` = fondu + changement de monde (délai anti-boucle 1 s) ; `get_ground_height(x, z)` ; `await fade_out()` / `await fade_in()`
+  - Groupes : "game" (Game), "player" (Player), "terrain" (Terrain du monde actuel)
+- `world.tscn` / `world.gd` : modèle de monde (pas de joueur dedans), configuré par `setup(seed, return_seed)` AVANT add_child. Graine 0 = monde d'origine (couleurs de la .tscn), autres graines = couleurs/relief tirés de la graine. L'Environment est dupliqué avant modification (sinon partagé entre instances). → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment, Portal (0, 0, -10)
+- `portal.tscn` / `portal.gd` : Portal → Ring (TorusMesh émissif), Swirl (QuadMesh + `portal_swirl.gdshader`), Particles, OmniLight3D, TriggerZone (Area3D → game.travel_through). `destination_seed` = monde visé. Origine = base au sol, centre de l'anneau à 1,6 m, face vers +Z. Se pose seul sur le terrain (`snap_to_ground`)
 - `player.tscn` : Player → zlorp, capsule, SpringArm3D/Camera3D
 - `player.gd` : déplacement (actions move_forward/back/left/right, jump), saut, caméra souris, animations Zlorp
 - Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches

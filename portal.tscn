@@ -51,6 +51,9 @@ billboard_keep_scale = true
 material = SubResource("Mat_spark")
 size = Vector2(0.08, 0.08)
 
+[sub_resource type="BoxShape3D" id="Shape_trigger"]
+size = Vector3(2.4, 2.8, 0.6)
+
 [node name="Portal" type="Node3D"]
 script = ExtResource("1_portal")
 
@@ -75,3 +78,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.5)
 light_color = Color(0.6, 0.4, 1, 1)
 light_energy = 3.0
 omni_range = 7.0
+
+[node name="TriggerZone" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TriggerZone"]
+shape = SubResource("Shape_trigger")

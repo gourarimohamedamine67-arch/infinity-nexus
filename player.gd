@@ -23,6 +23,7 @@ var jump_start_time = 0.0    # moment de l'anim où Zlorp est le plus accroupi (
 var jump_anim_speed = 1.0    # vitesse pour caler le sommet de l'anim sur le sommet du saut
 
 func _ready():
+	add_to_group("player")  # les portails reconnaissent le joueur par ce groupe
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# La caméra ne doit pas se cogner contre la capsule du joueur
 	spring_arm.add_excluded_object(get_rid())
@@ -129,6 +130,13 @@ func _physics_process(delta):
 	if not jumping:
 		_play(WALK_ANIM if direction else IDLE_ANIM)
 	move_and_slide()
+
+## Tourne caméra et Zlorp vers la direction dir (horizontale), ex. à la sortie d'un portail.
+func face(dir: Vector3):
+	rotation.y = atan2(-dir.x, -dir.z)           # l'avant du Player (caméra) est -Z
+	zlorp.global_rotation.y = atan2(dir.x, dir.z)  # l'avant de Zlorp est +Z
+	camera_x_rotation = 0.0
+	spring_arm.rotation.x = 0.0
 
 func _play(anim_name: String):
 	if anim_player.current_animation != anim_name:
