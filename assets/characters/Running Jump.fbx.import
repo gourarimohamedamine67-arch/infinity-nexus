@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dgst3rnvfwg07"
-valid=false
+path="res://.godot/imported/Running Jump.fbx-86ca2d8ecd47e6a7424dfa9251430ab2.scn"
 
 [deps]
 
 source_file="res://assets/characters/Running Jump.fbx"
+dest_files=["res://.godot/imported/Running Jump.fbx-86ca2d8ecd47e6a7424dfa9251430ab2.scn"]
 
 [params]
 

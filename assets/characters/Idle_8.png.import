@@ -3,7 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnjqbbvq3588p"
-valid=false
+path.s3tc="res://.godot/imported/Idle_8.png-f78323a9f9a3ee93f6b076093438310a.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
 generator_parameters={
 "md5": "f72823f5ea1a648a5af8d4f0d0ed8fb2"
 }
@@ -11,6 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/characters/Idle_8.png"
+dest_files=["res://.godot/imported/Idle_8.png-f78323a9f9a3ee93f6b076093438310a.s3tc.ctex"]
 
 [params]
 

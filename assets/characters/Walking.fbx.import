@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://1jl2nvwsflb6"
-valid=false
+path="res://.godot/imported/Walking.fbx-7f3a95304a85c421a8ed99ef9a4193f0.scn"
 
 [deps]
 
 source_file="res://assets/characters/Walking.fbx"
+dest_files=["res://.godot/imported/Walking.fbx-7f3a95304a85c421a8ed99ef9a4193f0.scn"]
 
 [params]
 
