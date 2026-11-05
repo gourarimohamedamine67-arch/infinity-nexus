@@ -33,13 +33,16 @@ script = ExtResource("1_f3sb7")
 [node name="zlorp" parent="Player" unique_id=860511177 instance=ExtResource("1_tlwt5")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Player" unique_id=415527678]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 visible = false
 mesh = SubResource("CapsuleMesh_gv5m4")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=789801335]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_f3sb7")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="Player" unique_id=1415617684]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 spring_length = 4.0
 
 [node name="Camera3D" type="Camera3D" parent="Player/SpringArm3D" unique_id=1356037121]
