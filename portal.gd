@@ -17,6 +17,8 @@ func _ready():
 		call_deferred("_snap_to_ground")
 
 func _snap_to_ground():
+	if not is_inside_tree():
+		return  # le monde a déjà été retiré (changement de monde très rapide)
 	var terrain = get_tree().get_first_node_in_group("terrain")
 	if terrain:
 		global_position.y = terrain.get_global_height(global_position.x, global_position.z) - sink

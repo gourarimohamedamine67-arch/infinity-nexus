@@ -37,6 +37,12 @@ extends Resource
 @export_group("Météo")
 @export_enum("Aucune", "Pluie", "Neige", "Brume") var weather: int = 0   ## mêmes valeurs que weather.gd Kind
 
+@export_group("Décor")
+@export_range(0, 150) var rock_count: int = 80        ## rochers (avec collision)
+@export_range(0, 80) var crystal_count: int = 30      ## cristaux lumineux, en grappes
+@export var rock_color: Color = Color(0.25, 0.22, 0.32)
+@export var crystal_color: Color = Color(0.4, 0.85, 1.0)
+
 const GOLDEN_RATIO = 0.618034
 ## Décalage de teinte des sommets par rapport au ciel : [nom, décalage]
 const SCHEMES = [
@@ -87,6 +93,12 @@ static func generate(seed_value: int) -> WorldData:
 	else:
 		d.start_time = rng.randf_range(0.58, 0.92)
 	d.star_density = rng.randf_range(0.006, 0.02)
+
+	# Décor : rochers dans la teinte du sol, cristaux d'une teinte qui ressort (opposée au ciel)
+	d.rock_count = rng.randi_range(40, 140)
+	d.crystal_count = rng.randi_range(15, 80)
+	d.rock_color = Color.from_hsv(hue, 0.35, lerp(0.18, 0.4, brightness))
+	d.crystal_color = Color.from_hsv(fposmod(hue + 0.5, 1.0), 0.75, 1.0)
 
 	# Météo : 40 % rien, 25 % pluie, 15 % neige, 20 % brume.
 	# La neige va mieux aux mondes froids (bleus/cyans) : là elle remplace souvent la pluie.

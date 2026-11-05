@@ -4,6 +4,7 @@ extends Node3D
 
 const SKY_SHADER = preload("res://sky.gdshader")
 const Weather = preload("res://weather.gd")
+const Decor = preload("res://decor.gd")
 const SKY_UPDATE_INTERVAL = 0.25   ## s entre deux mises à jour du ciel (recalcul coûteux)
 
 @onready var portal = $Portal
@@ -43,6 +44,8 @@ func _ready():
 	moon.shadow_enabled = false
 	moon.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY  # le ciel dessine sa propre lune (shader)
 	add_child(moon)
+	if data:
+		Decor.scatter(self, data, $Terrain)   # rochers et cristaux
 	if data and data.weather in [Weather.Kind.RAIN, Weather.Kind.SNOW]:
 		var weather = Weather.new()
 		weather.setup(data.weather, data.sky_horizon)
