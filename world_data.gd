@@ -34,6 +34,9 @@ extends Resource
 @export_range(0.0, 1.0) var start_time: float = 0.3  ## 0-0,5 = jour (0,25 = midi), 0,5-1 = nuit
 @export_range(0.0, 0.05) var star_density: float = 0.012
 
+@export_group("Météo")
+@export_enum("Aucune", "Pluie", "Neige", "Brume") var weather: int = 0   ## mêmes valeurs que weather.gd Kind
+
 const GOLDEN_RATIO = 0.618034
 ## Décalage de teinte des sommets par rapport au ciel : [nom, décalage]
 const SCHEMES = [
@@ -84,4 +87,18 @@ static func generate(seed_value: int) -> WorldData:
 	else:
 		d.start_time = rng.randf_range(0.58, 0.92)
 	d.star_density = rng.randf_range(0.006, 0.02)
+
+	# Météo : 40 % rien, 25 % pluie, 15 % neige, 20 % brume.
+	# La neige va mieux aux mondes froids (bleus/cyans) : là elle remplace souvent la pluie.
+	var cold = hue > 0.45 and hue < 0.75    # bleus et cyans
+	var warm = hue < 0.12 or hue > 0.9      # rouges et orangés : jamais de neige
+	var roll = rng.randf()
+	if roll < 0.40:
+		d.weather = 0                                    # aucune
+	elif roll < 0.65:
+		d.weather = 2 if cold and rng.randf() < 0.6 else 1   # pluie (ou neige si monde froid)
+	elif roll < 0.80:
+		d.weather = 1 if warm else 2                     # neige (ou pluie si monde chaud)
+	else:
+		d.weather = 3                                    # brume
 	return d
