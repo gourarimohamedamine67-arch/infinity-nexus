@@ -8,6 +8,8 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var spring_arm = $SpringArm3D
 @onready var anim_player = $zlorp/AnimationPlayer
+@onready var zlorp = $zlorp
+
 var camera_x_rotation = 0.0
 
 func _ready():
@@ -33,6 +35,7 @@ func _physics_process(delta):
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
 		anim_player.play("Take 001")
+		zlorp.look_at(global_position + direction, Vector3.UP)
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
