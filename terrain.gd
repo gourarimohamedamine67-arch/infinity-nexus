@@ -1,42 +1,90 @@
+@tool
 extends MeshInstance3D
+## Terrain procédural : une même graine donne toujours le même monde.
+## @tool : changer un paramètre dans l'inspecteur régénère le terrain dans l'éditeur.
 
-var width = 100
-var depth = 100
-var resolution = 50
+@export var world_seed: int = 0:
+	set(v): world_seed = v; _regenerate()
+@export var size: float = 100.0:              ## côté du terrain en mètres
+	set(v): size = v; _regenerate()
+@export var resolution: int = 50:             ## nombre de cases par côté
+	set(v): resolution = max(v, 2); _regenerate()
+@export var amplitude: float = 6.0:           ## hauteur max des collines (m), de -amplitude à +amplitude
+	set(v): amplitude = v; _regenerate()
+@export var frequency: float = 0.02:          ## petite valeur = collines larges
+	set(v): frequency = v; _regenerate()
+@export var octaves: int = 3:                 ## couches de détail (1 = très lisse)
+	set(v): octaves = clamp(v, 1, 8); _regenerate()
+@export var color_low: Color = Color(0.10, 0.12, 0.30):   ## couleur des creux
+	set(v): color_low = v; _regenerate()
+@export var color_high: Color = Color(0.45, 0.25, 0.65):  ## couleur des sommets
+	set(v): color_high = v; _regenerate()
+
+var noise := FastNoiseLite.new()
 
 func _ready():
 	generate_terrain()
 
+func _regenerate():
+	if is_node_ready():
+		generate_terrain()
+
+func _setup_noise():
+	noise.seed = world_seed
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = frequency
+	noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	noise.fractal_octaves = octaves
+
+## Hauteur du sol en (x, z), coordonnées locales au terrain.
+## Servira aussi à poser le joueur et les portails sur le sol.
+func get_height(x: float, z: float) -> float:
+	return noise.get_noise_2d(x, z) * amplitude
+
 func generate_terrain():
+	_setup_noise()
 	var surface = SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	for z in range(resolution):
-		for x in range(resolution):
-			var x1 = float(x) / resolution * width - width/2
-			var z1 = float(z) / resolution * depth - depth/2
-			var x2 = float(x+1) / resolution * width - width/2
-			var z2 = float(z+1) / resolution * depth - depth/2
-			
-			var y1 = get_height(x1, z1)
-			var y2 = get_height(x2, z1)
-			var y3 = get_height(x1, z2)
-			var y4 = get_height(x2, z2)
-			
-			surface.add_vertex(Vector3(x1, y1, z1))
-			surface.add_vertex(Vector3(x2, y2, z1))
-			surface.add_vertex(Vector3(x1, y3, z2))
-			
-			surface.add_vertex(Vector3(x2, y2, z1))
-			surface.add_vertex(Vector3(x2, y4, z2))
-			surface.add_vertex(Vector3(x1, y3, z2))
-	
+
+	var step = size / resolution
+	var half = size / 2.0
+	for zi in range(resolution):
+		for xi in range(resolution):
+			var x1 = xi * step - half
+			var z1 = zi * step - half
+			var x2 = x1 + step
+			var z2 = z1 + step
+			var p1 = Vector3(x1, get_height(x1, z1), z1)
+			var p2 = Vector3(x2, get_height(x2, z1), z1)
+			var p3 = Vector3(x1, get_height(x1, z2), z2)
+			var p4 = Vector3(x2, get_height(x2, z2), z2)
+			for p in [p1, p2, p3, p2, p4, p3]:
+				surface.set_color(_height_color(p.y))
+				surface.add_vertex(p)
+
 	surface.generate_normals()
 	mesh = surface.commit()
-	
+
+	var mat = StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 0.9
+	mesh.surface_set_material(0, mat)
+
 	var shape = ConcavePolygonShape3D.new()
 	shape.set_faces(mesh.get_faces())
 	$StaticBody3D/CollisionShape3D.shape = shape
 
-func get_height(x, z):
-	return sin(x * 0.1) * 3 + cos(z * 0.1) * 3
+func _height_color(y: float) -> Color:
+	var t = 0.5
+	if amplitude > 0.0:
+		t = clamp((y / amplitude + 1.0) / 2.0, 0.0, 1.0)
+	return color_low.lerp(color_high, t)
+
+# Le terrain est régénéré à chaque chargement : on évite de sauvegarder
+# le mesh et la collision (des centaines de Ko) dans world.tscn.
+func _notification(what):
+	if what == NOTIFICATION_EDITOR_PRE_SAVE:
+		mesh = null
+		$StaticBody3D/CollisionShape3D.shape = null
+	elif what == NOTIFICATION_EDITOR_POST_SAVE:
+		generate_terrain()

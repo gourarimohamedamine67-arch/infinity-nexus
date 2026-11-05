@@ -19,11 +19,18 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 ## État actuel (phase 1 terminée)
 - world.tscn : joueur CharacterBody3D (gravité, saut Espace, déplacement ZQSD ou flèches)
 - Caméra orbitale SpringArm3D, souris capturée, Échap pour libérer, clic pour reprendre
-- Terrain procédural SurfaceTool (sin/cos), collision ConcavePolygonShape3D
+- Terrain procédural SurfaceTool + FastNoiseLite (graine), dégradé de couleur selon la hauteur, collision ConcavePolygonShape3D
 - Ciel sci-fi WorldEnvironment + ProceduralSkyMaterial bleu/violet
 - Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking/Jump avec fondu
 - Prochaine étape : le premier portail Nexus (phase 2)
 
+## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
+1. ✅ Terrain paramétrable (FastNoiseLite, graine)
+2. game.tscn racine : Player persistant + nœud World où on charge les mondes + écran de fondu
+3. portal.tscn : anneau + shader tourbillon + particules + lumière
+4. Téléportation : Area3D, fondu, génération du monde destination (autre graine/ciel), joueur posé au sol près du portail retour, délai anti-boucle
+5. Ressource WorldData (graine, couleurs) + MAJ CLAUDE.md
+Choix : on entre en marchant dans le portail (pas de touche), destination procédurale, pas de hub tant qu'il n'y a pas 3 mondes
 ## Pièges Mixamo connus
 - Échelle : l'importeur FBX de Godot 4.6 convertit déjà les cm en mètres (Zlorp = 1,77 m en scale 1). Ne PAS mettre 0.01
 - La bonne anim est toujours "mixamo_com". Dans Idle.fbx, "Take 001" = T-pose (1 clé égale à la pose de repos), à ne pas utiliser
@@ -41,7 +48,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - `world.tscn` : World → DirectionalLight3D, Player (script player.gd), Terrain (script terrain.gd), WorldEnvironment
 - `player.gd` : déplacement (actions move_forward/back/left/right, jump), saut, caméra souris, animations Zlorp
 - Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches
-- `terrain.gd` : grille 100×100 m, 50×50 cases, hauteur `sin(x*0.1)*3 + cos(z*0.1)*3`
+- `terrain.gd` (@tool) : exports world_seed, size, resolution, amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` donne la hauteur du sol (coordonnées locales). Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde)
 - `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans world.tscn)
 - `assets/characters/` : Idle.fbx (modèle + skin), Walking/Running/Jumping/Running Jump.fbx (animations)
 - Git LFS suit *.fbx et *.png (.gitattributes). GitHub refuse les fichiers > 100 Mo hors LFS
