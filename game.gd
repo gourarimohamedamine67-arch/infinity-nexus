@@ -35,8 +35,7 @@ func get_ground_height(x: float, z: float) -> float:
 	var terrain = get_tree().get_first_node_in_group("terrain")
 	if terrain == null:
 		return 0.0
-	var local = terrain.to_local(Vector3(x, 0, z))
-	return terrain.to_global(Vector3(local.x, terrain.get_height(local.x, local.z), local.z)).y
+	return terrain.get_global_height(x, z)
 
 func fade_out() -> Signal:
 	return _fade_to(1.0)

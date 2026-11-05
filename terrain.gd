@@ -42,6 +42,11 @@ func _setup_noise():
 func get_height(x: float, z: float) -> float:
 	return noise.get_noise_2d(x, z) * amplitude
 
+## Hauteur du sol (y global) sous le point global (x, z).
+func get_global_height(x: float, z: float) -> float:
+	var local = to_local(Vector3(x, 0, z))
+	return to_global(Vector3(local.x, get_height(local.x, local.z), local.z)).y
+
 func generate_terrain():
 	_setup_noise()
 	var surface = SurfaceTool.new()

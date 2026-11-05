@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://btnxqljiy1675"]
 
 [ext_resource type="Script" uid="uid://dltaw2g1wx6sv" path="res://terrain.gd" id="2_fj7yv"]
+[ext_resource type="PackedScene" path="res://portal.tscn" id="3_portal"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fj7yv"]
 sky_top_color = Color(0.039215688, 0.039215688, 0.101960786, 1)
@@ -29,3 +30,6 @@ script = ExtResource("2_fj7yv")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=619757221]
 environment = SubResource("Environment_aqk2v")
+
+[node name="Portal" parent="." instance=ExtResource("3_portal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
