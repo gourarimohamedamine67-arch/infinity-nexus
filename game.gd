@@ -5,6 +5,8 @@ extends Node3D
 const WORLD_SCENE: PackedScene = preload("res://world.tscn")
 const FADE_TIME = 0.5
 const ARRIVAL_COOLDOWN = 1.0   ## secondes pendant lesquelles un portail ne peut pas re-téléporter
+const ORIGIN_WORLD: WorldData = preload("res://worlds/origin.tres")
+const FALL_LIMIT = 15.0        ## sous le sol de plus de 15 m (bord du monde) -> retour au point d'arrivée
 
 @onready var world_root: Node3D = $World
 @onready var player: CharacterBody3D = $Player
@@ -13,6 +15,8 @@ const ARRIVAL_COOLDOWN = 1.0   ## secondes pendant lesquelles un portail ne peut
 var current_world: Node3D = null
 var traveling := false
 var last_arrival_ms := -100000
+var arrival_spot := Vector2.ZERO
+var known_worlds := {}   ## graine -> WorldData déjà visités (base des sauvegardes, phase 4)
 
 func _ready():
 	add_to_group("game")     # les portails nous trouvent par ce groupe
@@ -27,10 +31,11 @@ func enter_world(seed_value: int, return_seed: int = -1):
 		world_root.remove_child(current_world)  # sort du groupe "terrain" tout de suite
 		current_world.queue_free()
 	current_world = WORLD_SCENE.instantiate()
-	current_world.setup(seed_value, return_seed)
+	current_world.setup(get_world_data(seed_value), return_seed)
 	world_root.add_child(current_world)
 	var arrival: Array = current_world.get_arrival(return_seed >= 0)
-	place_player(arrival[0])
+	arrival_spot = arrival[0]
+	place_player(arrival_spot)
 	player.face(arrival[1])
 	last_arrival_ms = Time.get_ticks_msec()
 
@@ -41,10 +46,21 @@ func travel_through(portal: Node3D):
 	traveling = true
 	player.set_physics_process(false)   # le joueur ne bouge plus pendant le fondu
 	await fade_out()
-	enter_world(portal.destination_seed, current_world.world_seed)
+	enter_world(portal.destination_seed, current_world.data.world_seed)
 	player.set_physics_process(true)
 	await fade_in()
 	traveling = false
+
+## Graine 0 = monde d'origine (worlds/origin.tres), sinon monde généré depuis la graine.
+func get_world_data(seed_value: int) -> WorldData:
+	if not known_worlds.has(seed_value):
+		known_worlds[seed_value] = ORIGIN_WORLD if seed_value == 0 else WorldData.generate(seed_value)
+	return known_worlds[seed_value]
+
+func _physics_process(_delta):
+	# Filet de sécurité : si le joueur tombe hors du monde, on le repose au point d'arrivée
+	if not traveling and player.global_position.y < get_ground_height(arrival_spot.x, arrival_spot.y) - FALL_LIMIT:
+		place_player(arrival_spot)
 
 ## Pose le joueur au sol en (x, z), immobile.
 func place_player(spawn: Vector2):

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WorldData" format=3]
+
+[ext_resource type="Script" path="res://world_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+world_seed = 0
+display_name = "Origine"
+amplitude = 6.0
+frequency = 0.02
+octaves = 3
+color_low = Color(0.1, 0.12, 0.3, 1)
+color_high = Color(0.45, 0.25, 0.65, 1)
+sky_top = Color(0.039215688, 0.039215688, 0.101960786, 1)
+sky_horizon = Color(0.101960786, 0.039215688, 0.18039216, 1)
+ground_bottom = Color(0, 0, 0, 1)
+sun_color = Color(0.9, 0.85, 1, 1)
+sun_energy = 1.0
+sun_pitch_deg = -50.0
+sun_yaw_deg = 30.0

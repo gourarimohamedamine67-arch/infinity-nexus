@@ -1,37 +1,38 @@
 extends Node3D
-## Un monde : terrain + ciel + lumière + portail.
+## Un monde : terrain + ciel + soleil + portail, configuré par une WorldData.
 ## setup() doit être appelé AVANT add_child() pour que le terrain ne soit généré qu'une fois.
 
-@onready var terrain = $Terrain
 @onready var portal = $Portal
 
-var world_seed := 0
+var data: WorldData
 
-## seed : graine de ce monde. return_seed : graine du monde d'où l'on vient (-1 = aucun).
-func setup(seed_value: int, return_seed: int = -1):
-	world_seed = seed_value
-	$Terrain.world_seed = seed_value
-	# Le portail ramène d'où l'on vient ; sinon il ouvre vers un nouveau monde.
-	$Portal.destination_seed = return_seed if return_seed >= 0 else seed_value + 1
-	if seed_value != 0:
-		_apply_procedural_colors(seed_value)
-	# (graine 0 = monde d'origine : on garde les couleurs faites à la main dans world.tscn)
+## data : description du monde. return_seed : graine du monde d'où l'on vient (-1 = aucun).
+func setup(world_data: WorldData, return_seed: int = -1):
+	data = world_data
+	var terrain = $Terrain
+	terrain.world_seed = data.world_seed
+	terrain.amplitude = data.amplitude
+	terrain.frequency = data.frequency
+	terrain.octaves = data.octaves
+	terrain.color_low = data.color_low
+	terrain.color_high = data.color_high
 
-func _apply_procedural_colors(seed_value: int):
-	var rng = RandomNumberGenerator.new()
-	rng.seed = seed_value
-	var hue = rng.randf()
 	# L'Environment est partagé entre toutes les instances de world.tscn : on le copie
 	var env: Environment = $WorldEnvironment.environment.duplicate(true)
 	$WorldEnvironment.environment = env
 	var sky_mat: ProceduralSkyMaterial = env.sky.sky_material
-	sky_mat.sky_top_color = Color.from_hsv(hue, 0.7, 0.12)
-	sky_mat.sky_horizon_color = Color.from_hsv(fmod(hue + 0.08, 1.0), 0.7, 0.22)
-	sky_mat.ground_horizon_color = sky_mat.sky_horizon_color
-	$Terrain.color_low = Color.from_hsv(hue, 0.6, 0.25)
-	$Terrain.color_high = Color.from_hsv(fmod(hue + 0.1, 1.0), 0.45, 0.65)
-	$Terrain.amplitude = rng.randf_range(3.0, 10.0)
-	$Terrain.frequency = rng.randf_range(0.012, 0.035)
+	sky_mat.sky_top_color = data.sky_top
+	sky_mat.sky_horizon_color = data.sky_horizon
+	sky_mat.ground_horizon_color = data.sky_horizon
+	sky_mat.ground_bottom_color = data.ground_bottom
+
+	var sun: DirectionalLight3D = $DirectionalLight3D
+	sun.rotation_degrees = Vector3(data.sun_pitch_deg, data.sun_yaw_deg, 0)
+	sun.light_color = data.sun_color
+	sun.light_energy = data.sun_energy
+
+	# Le portail ramène d'où l'on vient ; sinon il ouvre vers un nouveau monde.
+	$Portal.destination_seed = return_seed if return_seed >= 0 else data.world_seed + 1
 
 ## Point d'arrivée devant le portail. Renvoie [position xz, direction du regard].
 ## - par un portail : 3 m devant, dos au portail (on vient d'en sortir)

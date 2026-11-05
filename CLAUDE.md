@@ -23,15 +23,18 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Terrain procédural SurfaceTool + FastNoiseLite (graine), dégradé de couleur selon la hauteur, collision ConcavePolygonShape3D
 - Ciel sci-fi WorldEnvironment + ProceduralSkyMaterial bleu/violet
 - Perso Zlorp (Mixamo) sous Player : tourne vers la direction du mouvement, anims Idle/Walking/Jump avec fondu
-- Prochaine étape : le premier portail Nexus (phase 2)
+- Portail Nexus : aller-retour entre le monde d'origine et des mondes procéduraux (graine), fondu au noir
+- Filet de sécurité : si le joueur tombe à plus de 15 m sous le sol, il est reposé au point d'arrivée
+- Prochaine étape : test de l'étape 5 de la phase 2, puis plan de la phase 3
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
 2. ✅ game.tscn racine : Player persistant + nœud World où on charge les mondes + écran de fondu
 3. ✅ portal.tscn : anneau + shader tourbillon + particules + lumière
 4. ✅ Téléportation : Area3D, fondu, génération du monde destination (autre graine/ciel), joueur posé au sol près du portail retour, délai anti-boucle
-5. Ressource WorldData (graine, couleurs) + MAJ CLAUDE.md
+5. ✅ Ressource WorldData (graine, relief, couleurs, ciel, soleil) + MAJ CLAUDE.md
 Choix : on entre en marchant dans le portail (pas de touche), destination procédurale, pas de hub tant qu'il n'y a pas 3 mondes
+
 ## Pièges Mixamo connus
 - Échelle : l'importeur FBX de Godot 4.6 convertit déjà les cm en mètres (Zlorp = 1,77 m en scale 1). Ne PAS mettre 0.01
 - La bonne anim est toujours "mixamo_com". Dans Idle.fbx, "Take 001" = T-pose (1 clé égale à la pose de repos), à ne pas utiliser
@@ -47,9 +50,12 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 ## Structure du projet
 - `project.godot` : scène principale = game.tscn, physique Jolt, rendu Forward+ (D3D12)
 - `game.tscn` / `game.gd` : Game → World (conteneur du monde actuel), Player (player.tscn), Fade (CanvasLayer + ColorRect noir)
+  - `get_world_data(seed)` : graine 0 = `worlds/origin.tres`, sinon `WorldData.generate(seed)` ; mis en cache dans `known_worlds`
   - `enter_world(seed, return_seed)` remplace le monde et pose le joueur devant le portail ; `travel_through(portal)` = fondu + changement de monde (délai anti-boucle 1 s) ; `get_ground_height(x, z)` ; `await fade_out()` / `await fade_in()`
   - Groupes : "game" (Game), "player" (Player), "terrain" (Terrain du monde actuel)
-- `world.tscn` / `world.gd` : modèle de monde (pas de joueur dedans), configuré par `setup(seed, return_seed)` AVANT add_child. Graine 0 = monde d'origine (couleurs de la .tscn), autres graines = couleurs/relief tirés de la graine. L'Environment est dupliqué avant modification (sinon partagé entre instances). → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment, Portal (0, 0, -10)
+- `world.tscn` / `world.gd` : modèle de monde (pas de joueur dedans), configuré par `setup(world_data, return_seed)` AVANT add_child (applique terrain, ciel, soleil). Les valeurs de la .tscn ne servent que de défaut. L'Environment est dupliqué avant modification (sinon partagé entre instances). → DirectionalLight3D, Terrain (groupe "terrain"), WorldEnvironment, Portal (0, 0, -10)
+- `world_data.gd` (class_name WorldData, Resource) : world_seed, display_name, terrain (amplitude, frequency, octaves, couleurs), ciel, soleil (couleur, énergie, angles). `WorldData.generate(seed)` = monde procédural déterministe
+- `worlds/origin.tres` : le monde d'origine, réglable dans l'inspecteur
 - `portal.tscn` / `portal.gd` : Portal → Ring (TorusMesh émissif), Swirl (QuadMesh + `portal_swirl.gdshader`), Particles, OmniLight3D, TriggerZone (Area3D → game.travel_through). `destination_seed` = monde visé. Origine = base au sol, centre de l'anneau à 1,6 m, face vers +Z. Se pose seul sur le terrain (`snap_to_ground`)
 - `player.tscn` : Player → zlorp, capsule, SpringArm3D/Camera3D
 - `player.gd` : déplacement (actions move_forward/back/left/right, jump), saut, caméra souris, animations Zlorp
@@ -60,3 +66,6 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 - Git LFS suit *.fbx et *.png (.gitattributes). GitHub refuse les fichiers > 100 Mo hors LFS
 - Si des .fbx/.png font ~130 octets, ce sont des pointeurs LFS : lancer `git lfs checkout` (sinon Godot écrit valid=false dans les .import)
 - Godot 4.6.2 : C:/Users/goura/Downloads/Godot_v4.6.2-stable_win64.exe/ (dossier ; le _console.exe sert pour --headless)
+- Nouveau `class_name` : en headless, lancer d'abord `--headless --import` pour l'enregistrer dans le cache des classes, sinon « Could not find type »
+- Ne jamais tuer Godot par nom de processus (`taskkill /IM`) : ça fermerait aussi l'éditeur d'Amine. Toujours mettre un `timeout` aux tests headless
+- Avertissements GDScript : interroger le LSP de l'éditeur ouvert (port 6005, textDocument/didOpen → publishDiagnostics)

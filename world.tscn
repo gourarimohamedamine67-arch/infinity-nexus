@@ -22,6 +22,7 @@ script = ExtResource("4_world")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1958423386]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8236547, 1.9767182, 1.950953)
+shadow_enabled = true
 
 [node name="Terrain" type="MeshInstance3D" parent="." unique_id=1237155095]
 script = ExtResource("2_fj7yv")
