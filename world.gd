@@ -137,11 +137,11 @@ func _update_day_night(refresh_sky: bool):
 		env.ambient_light_sky_contribution = 1.0 - 0.5 * night
 
 ## Point d'arrivée devant le portail. Renvoie [position xz, direction du regard].
-## - par un portail : 3 m devant, dos au portail (on vient d'en sortir)
+## - par un portail : 6 m devant, dos au portail (on vient d'en sortir)
 ## - au lancement du jeu : 10 m devant, face au portail (pour le voir)
 func get_arrival(by_portal: bool) -> Array:
 	var front: Vector3 = portal.global_basis.z.normalized()  # le portail regarde vers +Z
-	var distance = 3.0 if by_portal else 10.0
+	var distance = 6.0 if by_portal else 10.0   # 6 m : la caméra (4 m derrière le joueur) reste devant l'anneau
 	var spot: Vector3 = portal.global_position + front * distance
 	var look = front if by_portal else -front
 	return [Vector2(spot.x, spot.z), look]

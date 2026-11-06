@@ -5,6 +5,8 @@ extends CanvasLayer
 
 const SlotUI = preload("res://ui/slot_ui.gd")
 const Items = preload("res://items.gd")
+const Families = preload("res://families.gd")
+const WEATHER_NAMES = ["Temps clair", "Pluie", "Neige", "Brume"]
 
 signal menu_toggled(open: bool)
 
@@ -16,6 +18,13 @@ var inventory_panel: PanelContainer
 var item_name_label: Label
 var item_name_timer := 0.0
 var menu_open := false
+var health_bar: ProgressBar
+var stamina_bar: ProgressBar
+var stamina_fill: StyleBoxFlat
+var banner: VBoxContainer
+var banner_title: Label
+var banner_subtitle: Label
+var banner_tween: Tween
 
 func _ready():
 	add_to_group("hud")
@@ -27,6 +36,10 @@ func setup(p: CharacterBody3D):
 	inventory = p.inventory
 	_build_hotbar()
 	_build_inventory_panel()
+	_build_status_bars()
+	_build_banner()
+	p.health_changed.connect(func(v, m): health_bar.max_value = m; health_bar.value = v)
+	p.stamina_changed.connect(_on_stamina_changed)
 	inventory.changed.connect(_refresh_all)
 	inventory.selected_changed.connect(_on_selected_changed)
 	_on_selected_changed(inventory.selected)
@@ -106,6 +119,99 @@ func _build_inventory_panel():
 	help.add_theme_font_size_override("font_size", 13)
 	help.modulate = Color(1, 1, 1, 0.7)
 	box.add_child(help)
+
+func _build_status_bars():
+	var box = VBoxContainer.new()
+	box.name = "StatusBars"
+	box.add_theme_constant_override("separation", 6)
+	box.anchor_top = 1.0
+	box.anchor_bottom = 1.0
+	box.offset_left = 24
+	box.offset_right = 264
+	box.offset_top = -78
+	box.offset_bottom = -16
+	add_child(box)
+	health_bar = _make_bar(box, "Vie", Color(0.85, 0.18, 0.25))
+	stamina_bar = _make_bar(box, "Endurance", Color(0.95, 0.8, 0.25))
+	stamina_fill = stamina_bar.get_theme_stylebox("fill")
+	health_bar.max_value = player.MAX_HEALTH
+	health_bar.value = player.health
+	stamina_bar.max_value = player.MAX_STAMINA
+	stamina_bar.value = player.stamina
+
+func _make_bar(parent: Control, caption: String, color: Color) -> ProgressBar:
+	var bar = ProgressBar.new()
+	bar.custom_minimum_size = Vector2(240, 22)
+	bar.show_percentage = false
+	var bg = StyleBoxFlat.new()
+	bg.bg_color = Color(0.05, 0.04, 0.1, 0.75)
+	bg.border_color = Color(0.45, 0.35, 0.7, 0.8)
+	bg.set_border_width_all(2)
+	bg.set_corner_radius_all(5)
+	var fill = StyleBoxFlat.new()
+	fill.bg_color = color
+	fill.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("background", bg)
+	bar.add_theme_stylebox_override("fill", fill)
+	var label = Label.new()
+	label.text = caption
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_constant_override("outline_size", 4)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	bar.add_child(label)
+	parent.add_child(bar)
+	return bar
+
+func _build_banner():
+	banner = VBoxContainer.new()
+	banner.name = "ArrivalBanner"
+	banner.anchor_left = 0.5
+	banner.anchor_right = 0.5
+	banner.offset_left = -400
+	banner.offset_right = 400
+	banner.offset_top = 40
+	banner.offset_bottom = 130
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	banner.modulate.a = 0.0
+	add_child(banner)
+	banner_title = Label.new()
+	banner_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner_title.add_theme_font_size_override("font_size", 38)
+	banner_title.add_theme_constant_override("outline_size", 8)
+	banner_title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	banner.add_child(banner_title)
+	banner_subtitle = Label.new()
+	banner_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner_subtitle.add_theme_font_size_override("font_size", 20)
+	banner_subtitle.add_theme_constant_override("outline_size", 6)
+	banner_subtitle.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	banner.add_child(banner_subtitle)
+
+## Bandeau d'arrivée : nom du monde, famille, danger (étoiles) et météo.
+func show_arrival(data: WorldData):
+	banner_title.text = data.display_name
+	if data.danger == 0:
+		banner_subtitle.text = "Zone sûre"
+	else:
+		var stars = "★".repeat(data.danger) + "☆".repeat(5 - data.danger)
+		banner_subtitle.text = "%s  ·  Danger %s  ·  %s" % [Families.name_of(data.family), stars, WEATHER_NAMES[data.weather]]
+	banner_title.add_theme_color_override("font_color", Families.CRYSTAL_COLORS[data.family].lightened(0.35) if data.danger > 0 else Color.WHITE)
+	if banner_tween:
+		banner_tween.kill()
+	banner_tween = create_tween()
+	banner_tween.tween_interval(0.4)   # laisse le fondu au noir se terminer
+	banner_tween.tween_property(banner, "modulate:a", 1.0, 0.6)
+	banner_tween.tween_interval(3.0)
+	banner_tween.tween_property(banner, "modulate:a", 0.0, 1.0)
+
+func _on_stamina_changed(value: float, max_value: float, exhausted: bool):
+	stamina_bar.max_value = max_value
+	stamina_bar.value = value
+	# Essoufflé : la barre passe à l'orange tant que la course est bloquée
+	stamina_fill.bg_color = Color(0.95, 0.45, 0.15) if exhausted else Color(0.95, 0.8, 0.25)
 
 # --- Mise à jour ---
 

@@ -77,7 +77,7 @@ static func generate(seed_value: int, forced_family: int = -1, forced_danger: in
 	d.world_seed = seed_value
 	d.family = Families.from_hue(hue)
 	d.danger = forced_danger if forced_danger >= 0 else rng_extra.randi_range(1, 3)
-	d.display_name = "Monde %d (%s)" % [seed_value, scheme[0]]
+	d.display_name = "Monde %d" % seed_value   # (le schéma de couleurs reste interne)
 
 	d.amplitude = rng.randf_range(3.0, 10.0)
 	d.frequency = rng.randf_range(0.012, 0.035)

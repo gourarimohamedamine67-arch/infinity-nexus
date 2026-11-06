@@ -6,6 +6,14 @@ extends CharacterBody3D
 const SPEED = 5.0
 const RUN_SPEED = 8.0        # vitesse en courant (Shift)
 const RUN_ANIM_SPEED = 1.3   # l'anim Running est prévue pour ~2,6 m/s : on l'accélère un peu
+
+# --- Vie et endurance ---
+const MAX_HEALTH = 100.0
+const MAX_STAMINA = 100.0
+const SPRINT_COST = 20.0           # endurance par seconde de course
+const STAMINA_REGEN = 18.0         # endurance récupérée par seconde
+const STAMINA_REGEN_DELAY = 0.8    # pause avant de récupérer après un effort (s)
+const EXHAUSTED_UNTIL = 25.0       # essoufflé à 0 : plus de course avant de remonter à 25
 const JUMP_VELOCITY = 4.5
 const MOUSE_SENSITIVITY = 0.003
 const TURN_SPEED = 10.0      # vitesse de rotation de Zlorp vers la direction du mouvement
@@ -20,6 +28,10 @@ const HIPS_POS = "Skeleton3D:mixamorig1_Hips"
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+signal health_changed(value: float, max_value: float)
+signal stamina_changed(value: float, max_value: float, exhausted: bool)
+signal died
+
 @onready var spring_arm = $SpringArm3D
 @onready var zlorp = $zlorp
 @onready var anim_player: AnimationPlayer = $zlorp/AnimationPlayer
@@ -27,6 +39,10 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var camera_x_rotation := 0.0   # inclinaison verticale de la caméra (radians)
 var inventory := Inventory.new()   # porté par le joueur : persiste d'un monde à l'autre
 var controls_enabled := true   # faux quand un menu est ouvert (inventaire…)
+var health := MAX_HEALTH
+var stamina := MAX_STAMINA
+var exhausted := false             # endurance tombée à 0 : la course est bloquée
+var stamina_regen_wait := 0.0
 var jumping := false
 var jump_start_time := 0.0     # moment de l'anim où Zlorp est le plus accroupi (impulsion)
 var jump_anim_speed := 1.0     # vitesse pour caler le sommet de l'anim sur le sommet du saut
@@ -152,7 +168,8 @@ func _physics_process(delta):
 	if controls_enabled:
 		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	var running = direction != Vector3.ZERO and Input.is_action_pressed("sprint")
+	var running = direction != Vector3.ZERO and Input.is_action_pressed("sprint") and not exhausted
+	_update_stamina(delta, running)
 	if direction:
 		var speed = RUN_SPEED if running else SPEED
 		velocity.x = direction.x * speed
@@ -182,3 +199,42 @@ func face(dir: Vector3):
 func _play(anim_name: String, speed: float = 1.0):
 	if anim_player.current_animation != anim_name:
 		anim_player.play(anim_name, ANIM_BLEND, speed)
+
+# --- Vie et endurance ---
+
+## Consomme de l'endurance pour un effort ponctuel (coup, récolte…). Faux si pas assez.
+func spend_stamina(amount: float) -> bool:
+	if stamina < amount:
+		return false
+	_set_stamina(stamina - amount)
+	stamina_regen_wait = STAMINA_REGEN_DELAY
+	return true
+
+func take_damage(amount: float):
+	if health <= 0.0:
+		return
+	health = max(health - amount, 0.0)
+	health_changed.emit(health, MAX_HEALTH)
+	if health <= 0.0:
+		died.emit()   # la mort (sac, retour à la base) arrive à l'étape 13
+
+func heal(amount: float):
+	health = min(health + amount, MAX_HEALTH)
+	health_changed.emit(health, MAX_HEALTH)
+
+func _update_stamina(delta: float, running: bool):
+	if running:
+		_set_stamina(stamina - SPRINT_COST * delta)
+		stamina_regen_wait = STAMINA_REGEN_DELAY
+	elif stamina_regen_wait > 0.0:
+		stamina_regen_wait -= delta
+	elif stamina < MAX_STAMINA:
+		_set_stamina(stamina + STAMINA_REGEN * delta)
+
+func _set_stamina(value: float):
+	stamina = clamp(value, 0.0, MAX_STAMINA)
+	if stamina <= 0.0:
+		exhausted = true
+	elif exhausted and stamina >= EXHAUSTED_UNTIL:
+		exhausted = false
+	stamina_changed.emit(stamina, MAX_STAMINA, exhausted)

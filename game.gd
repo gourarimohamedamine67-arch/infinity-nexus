@@ -50,6 +50,7 @@ func enter_world(seed_value: int, return_seed: int = -1):
 	last_arrival_ms = Time.get_ticks_msec()
 	var d: WorldData = current_world.data
 	print("Arrivée : %s, famille %s, danger %d" % [d.display_name, Families.name_of(d.family), d.danger])
+	$HUD.show_arrival(d)
 
 ## Appelé par un portail quand le joueur entre dedans.
 func travel_through(portal: Node3D):
