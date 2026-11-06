@@ -6,6 +6,16 @@ const SKY_SHADER = preload("res://sky.gdshader")
 const Weather = preload("res://weather.gd")
 const Decor = preload("res://decor.gd")
 const SKY_UPDATE_INTERVAL = 0.25   ## s entre deux mises à jour du ciel (recalcul coûteux)
+const Sounds = preload("res://sounds.gd")
+const Families = preload("res://families.gd")
+
+## Récolte : points de vie, puissance d'outil requise et quantité donnée, par objet récolté.
+## (« pierre » = rochers, « quartz » = cristaux pâles, le reste = cristaux rares de famille)
+const HARVEST = {
+	&"pierre": {"hp": 6, "power": 0, "drop": [2, 4]},
+	&"quartz": {"hp": 6, "power": 1, "drop": [1, 3]},
+	"rare":    {"hp": 9, "power": 1, "drop": [1, 2]},
+}
 
 @onready var portal = $Portal
 @onready var sun: DirectionalLight3D = $DirectionalLight3D
@@ -37,6 +47,7 @@ func setup(world_data: WorldData, return_seed: int = -1):
 	$Portal.destination_seed = return_seed if return_seed >= 0 else data.world_seed + 1
 
 func _ready():
+	add_to_group("world")   # le joueur trouve le monde actuel (récolte) par ce groupe
 	# Lune : lumière bleutée opposée au soleil, active la nuit
 	moon = DirectionalLight3D.new()
 	moon.name = "Moon"
@@ -135,6 +146,74 @@ func _update_day_night(refresh_sky: bool):
 		sky_mat.set_shader_parameter("moon_dir", moon.global_basis.z)  # la lumière va vers -Z : la lune est en +Z
 		env.fog_light_color = data.fog_color.lerp(night_horizon, night)
 		env.ambient_light_sky_contribution = 1.0 - 0.5 * night
+
+# --- Récolte ---
+
+## Frappe un objet du décor (forme de collision marquée par decor.gd).
+## damage : dégâts du coup ; tool_power : puissance de l'outil tenu (0 = main nue).
+## Renvoie {"refused": bool, "broken": bool, "item": StringName, "count": int}.
+func hit_decor(col: CollisionShape3D, damage: int, tool_power: int) -> Dictionary:
+	var item: StringName = col.get_meta("item")
+	var rules = HARVEST.get(item, HARVEST["rare"])
+	var is_rock = item == &"pierre"
+	var pos = col.global_position
+	if tool_power < rules.power:
+		Sounds.play_at(self, pos, "impactSoft_medium", -6.0)   # « toc » sourd : rien ne se passe
+		return {"refused": true, "broken": false, "item": item, "count": 0}
+
+	var hp: int = col.get_meta("hp", rules.hp) - damage
+	var mmi: MultiMeshInstance3D = get_node(String(col.get_meta("decor_node")))
+	var index: int = col.get_meta("decor_index")
+	var xform = mmi.multimesh.get_instance_transform(index)
+	if hp > 0:
+		col.set_meta("hp", hp)
+		# Retour visuel : l'objet rétrécit un peu à chaque coup
+		mmi.multimesh.set_instance_transform(index, Transform3D(xform.basis.scaled(Vector3.ONE * 0.9), xform.origin))
+		Sounds.play_at(self, pos, "impactMining" if is_rock else "impactGlass_light")
+		_burst(pos, _decor_color(item), 6)
+		return {"refused": false, "broken": false, "item": item, "count": 0}
+
+	# Cassé : l'instance disparaît (échelle 0), la collision est retirée, on récupère la ressource
+	mmi.multimesh.set_instance_transform(index, Transform3D(Basis().scaled(Vector3.ZERO), xform.origin))
+	col.queue_free()
+	Sounds.play_at(self, pos, "impactMining" if is_rock else "impactGlass_medium", 3.0)
+	_burst(pos, _decor_color(item), 18)
+	var count = randi_range(rules.drop[0], rules.drop[1])
+	return {"refused": false, "broken": true, "item": item, "count": count}
+
+func _decor_color(item: StringName) -> Color:
+	if item == &"pierre":
+		return data.rock_color.lightened(0.2)
+	if item == &"quartz":
+		return data.crystal_color
+	return Families.CRYSTAL_COLORS[data.family]
+
+## Petits éclats qui jaillissent quand on frappe.
+func _burst(pos: Vector3, color: Color, amount: int):
+	var p = CPUParticles3D.new()
+	p.one_shot = true
+	p.amount = amount
+	p.explosiveness = 1.0
+	p.lifetime = 0.7
+	p.direction = Vector3.UP
+	p.spread = 70.0
+	p.initial_velocity_min = 2.0
+	p.initial_velocity_max = 4.5
+	p.gravity = Vector3(0, -12, 0)
+	p.scale_amount_min = 0.5
+	p.scale_amount_max = 1.2
+	var mesh = BoxMesh.new()
+	mesh.size = Vector3.ONE * 0.08
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = color.s > 0.3   # éclats de cristaux colorés : légèrement lumineux
+	mat.emission = color
+	mesh.material = mat
+	p.mesh = mesh
+	add_child(p)
+	p.global_position = pos
+	p.emitting = true
+	get_tree().create_timer(1.5).timeout.connect(p.queue_free)
 
 ## Point d'arrivée devant le portail. Renvoie [position xz, direction du regard].
 ## - par un portail : 6 m devant, dos au portail (on vient d'en sortir)

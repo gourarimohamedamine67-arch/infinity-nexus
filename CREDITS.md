@@ -18,7 +18,7 @@ Liste de tous les assets externes utilisés dans Infinity Nexus, avec leur licen
 ### Mixamo (Adobe) : personnage Zlorp et animations
 - **Source** : https://www.mixamo.com
 - **Licence** : conditions d'utilisation Mixamo/Adobe (usage libre, y compris commercial, dans un projet ; pas de redistribution des fichiers bruts comme assets)
-- **Utilisé** (`assets/characters/`) : modèle de Zlorp (Idle.fbx, « with skin »), animations Walking, Running, Jumping, Running Jump (« without skin »)
+- **Utilisé** (`assets/characters/`) : modèle de Zlorp (Idle.fbx, « with skin »), animations « without skin » : Walking, Running, Jumping, Running Jump, Attack_Downward (coup de pioche), Attack_Horizontal, Hit_Reaction, Dying, Dodge, Picking_Up
 
 ## Sons
 

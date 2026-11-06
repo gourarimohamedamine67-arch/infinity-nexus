@@ -25,6 +25,7 @@ var banner: VBoxContainer
 var banner_title: Label
 var banner_subtitle: Label
 var banner_tween: Tween
+var messages: VBoxContainer
 
 func _ready():
 	add_to_group("hud")
@@ -38,6 +39,7 @@ func setup(p: CharacterBody3D):
 	_build_inventory_panel()
 	_build_status_bars()
 	_build_banner()
+	_build_messages()
 	p.health_changed.connect(func(v, m): health_bar.max_value = m; health_bar.value = v)
 	p.stamina_changed.connect(_on_stamina_changed)
 	inventory.changed.connect(_refresh_all)
@@ -206,6 +208,38 @@ func show_arrival(data: WorldData):
 	banner_tween.tween_property(banner, "modulate:a", 1.0, 0.6)
 	banner_tween.tween_interval(3.0)
 	banner_tween.tween_property(banner, "modulate:a", 0.0, 1.0)
+
+func _build_messages():
+	messages = VBoxContainer.new()
+	messages.name = "Messages"
+	messages.anchor_left = 1.0
+	messages.anchor_right = 1.0
+	messages.anchor_top = 1.0
+	messages.anchor_bottom = 1.0
+	messages.offset_left = -420
+	messages.offset_right = -24
+	messages.offset_top = -260
+	messages.offset_bottom = -24
+	messages.alignment = BoxContainer.ALIGNMENT_END
+	messages.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(messages)
+
+## Petit message en bas à droite (« +3 Pierre », « Il faut une pioche »…), qui s'efface seul.
+func show_message(text: String, color: Color = Color.WHITE):
+	var label = Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_constant_override("outline_size", 5)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	messages.add_child(label)
+	while messages.get_child_count() > 6:
+		messages.get_child(0).free()   # garde les 6 derniers
+	var tween = label.create_tween()
+	tween.tween_interval(2.5)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(label.queue_free)
 
 func _on_stamina_changed(value: float, max_value: float, exhausted: bool):
 	stamina_bar.max_value = max_value

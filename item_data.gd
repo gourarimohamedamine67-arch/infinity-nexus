@@ -14,3 +14,8 @@ enum Kind { RESOURCE, TOOL, PLACEABLE, KEY }
 @export_range(1, 999) var max_stack: int = 99
 @export var family: int = -1                ## famille de monde (-1 = ressource de base)
 @export_range(0, 3) var rarity: int = 0     ## 0 commun, 1 peu commun, 2 rare, 3 exceptionnel
+
+@export_group("Modèle et outil")
+@export var model: PackedScene              ## modèle 3D (tenu en main, posé dans le monde…)
+@export var model_scale: float = 1.0        ## les modèles Kenney sont minuscules : ~3,5 pour un outil
+@export_range(0, 3) var tool_power: int = 0 ## 0 = pas un outil ; 1 = pioche (casse le quartz et les cristaux)…

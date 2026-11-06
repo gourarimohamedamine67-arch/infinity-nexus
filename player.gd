@@ -19,12 +19,26 @@ const MOUSE_SENSITIVITY = 0.003
 const TURN_SPEED = 10.0      # vitesse de rotation de Zlorp vers la direction du mouvement
 const ANIM_BLEND = 0.2       # durée du fondu entre deux animations (secondes)
 
+# --- Coup (récolte ; le combat viendra à l'étape 11) ---
+# Attack_Downward (Mixamo) : armé au plus haut à 0,65 s, impact au plus bas à 0,90 s.
+const SWING_ANIM_START = 0.15      # on saute le début de l'anim (position de repos)
+const SWING_ANIM_END = 1.4         # et la fin (retour au calme), qui ralentirait le jeu
+const SWING_ANIM_IMPACT = 0.90
+const SWING_ANIM_SPEED = 1.4       # -> impact 0,54 s après le clic, coup complet en 0,9 s
+const SWING_COST = 8.0             # endurance par coup
+const HAND_DAMAGE = 1              # dégâts à main nue
+const TOOL_DAMAGE_PER_POWER = 3    # pioche (puissance 1) = 3 dégâts
+const HIT_REACH = 1.3              # distance du centre du coup devant Zlorp (m)
+const HIT_RADIUS = 0.9
+
 # --- Animations (librairie "zlorp" construite au lancement) ---
 const IDLE_ANIM = "zlorp/idle"
 const WALK_ANIM = "zlorp/walk"
 const RUN_ANIM = "zlorp/run"
 const JUMP_ANIM = "zlorp/jump"
+const SWING_ANIM = "zlorp/swing"
 const HIPS_POS = "Skeleton3D:mixamorig1_Hips"
+const Items = preload("res://items.gd")
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -46,6 +60,11 @@ var stamina_regen_wait := 0.0
 var jumping := false
 var jump_start_time := 0.0     # moment de l'anim où Zlorp est le plus accroupi (impulsion)
 var jump_anim_speed := 1.0     # vitesse pour caler le sommet de l'anim sur le sommet du saut
+var swinging := false
+var swing_time := 0.0          # temps écoulé depuis le début du coup (s)
+var swing_hit_done := false
+var hand_slot: BoneAttachment3D   # main droite de Zlorp : l'objet tenu y est accroché
+var held_model: Node3D
 
 func _ready():
 	add_to_group("player")  # les portails reconnaissent le joueur par ce groupe
@@ -54,6 +73,13 @@ func _ready():
 	spring_arm.add_excluded_object(get_rid())
 	_setup_animations()
 	anim_player.play(IDLE_ANIM)
+	# Objet tenu en main droite : suit la case sélectionnée de la barre rapide
+	hand_slot = BoneAttachment3D.new()
+	hand_slot.name = "RightHand"
+	hand_slot.bone_name = "mixamorig1_RightHand"
+	zlorp.get_node("Skeleton3D").add_child(hand_slot)
+	inventory.changed.connect(_update_held_item)
+	inventory.selected_changed.connect(func(_i): _update_held_item())
 
 # --- Préparation des animations ---
 
@@ -79,6 +105,10 @@ func _setup_animations():
 	jump.loop_mode = Animation.LOOP_NONE
 	lib.add_animation("jump", jump)
 	_compute_jump_timing(jump)
+
+	var swing = _load_mixamo_anim("res://assets/characters/Attack_Downward.fbx")
+	swing.loop_mode = Animation.LOOP_NONE
+	lib.add_animation("swing", swing)
 
 	anim_player.add_animation_library("zlorp", lib)
 
@@ -145,6 +175,9 @@ func _unhandled_input(event):
 			and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)   # ce clic sert seulement à reprendre la souris
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("attack") and controls_enabled:
+		_start_swing()
+		get_viewport().set_input_as_handled()
 
 func _input(event):
 	# La caméra ne tourne que si la souris est capturée (donc jamais avec un menu ouvert)
@@ -164,8 +197,10 @@ func _physics_process(delta):
 		jumping = true
 		anim_player.play(JUMP_ANIM, 0.1, jump_anim_speed)
 		anim_player.seek(jump_start_time, true)
+	if swinging:
+		_update_swing(delta)
 	var input_dir = Vector2.ZERO
-	if controls_enabled:
+	if controls_enabled and not swinging:   # on ne se déplace pas pendant un coup
 		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	var running = direction != Vector3.ZERO and Input.is_action_pressed("sprint") and not exhausted
@@ -180,7 +215,9 @@ func _physics_process(delta):
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
-	if not jumping:
+	if swinging:
+		pass   # l'anim du coup est déjà lancée
+	elif not jumping:
 		if running:
 			_play(RUN_ANIM, RUN_ANIM_SPEED)
 		elif direction:
@@ -188,6 +225,101 @@ func _physics_process(delta):
 		else:
 			_play(IDLE_ANIM)
 	move_and_slide()
+
+# --- Coup et récolte ---
+
+func _start_swing():
+	if swinging or jumping or not is_on_floor():
+		return
+	if not spend_stamina(SWING_COST):
+		_hud_message("Trop fatigué pour frapper", Color(1, 0.6, 0.3))
+		return
+	swinging = true
+	swing_time = 0.0
+	swing_hit_done = false
+	# Zlorp se tourne vers là où regarde la caméra : on vise avec la souris
+	var aim = -global_basis.z
+	zlorp.global_rotation.y = atan2(aim.x, aim.z)
+	anim_player.play(SWING_ANIM, 0.1, SWING_ANIM_SPEED)
+	anim_player.seek(SWING_ANIM_START, true)
+
+func _update_swing(delta: float):
+	swing_time += delta
+	var impact_at = (SWING_ANIM_IMPACT - SWING_ANIM_START) / SWING_ANIM_SPEED
+	var end_at = (SWING_ANIM_END - SWING_ANIM_START) / SWING_ANIM_SPEED
+	if not swing_hit_done and swing_time >= impact_at:
+		swing_hit_done = true
+		_resolve_hit()
+	if swing_time >= end_at:
+		swinging = false
+
+## Au moment de l'impact : cherche l'objet du décor le plus proche devant Zlorp et le frappe.
+func _resolve_hit():
+	var forward = zlorp.global_basis.z   # l'avant de Zlorp est +Z
+	var center = global_position + forward * HIT_REACH + Vector3.UP * 0.9
+	var target = _find_decor_target(center)
+	if target == null:
+		return
+	var world = get_tree().get_first_node_in_group("world")
+	if world == null:
+		return
+	var tool = inventory.selected_item()
+	var power = tool.tool_power if tool else 0
+	var damage = power * TOOL_DAMAGE_PER_POWER if power > 0 else HAND_DAMAGE
+	var result = world.hit_decor(target, damage, power)
+	if result.refused:
+		_hud_message("Il faut une pioche pour extraire ça", Color(1, 0.6, 0.3))
+	elif result.broken:
+		var item = Items.get_item(result.item)
+		var left = inventory.add(result.item, result.count)
+		var got = result.count - left
+		if got > 0:
+			_hud_message("+%d %s" % [got, item.display_name], item.icon_color.lightened(0.3))
+		if left > 0:
+			_hud_message("Inventaire plein : %d %s perdu(s)" % [left, item.display_name], Color(1, 0.4, 0.4))
+
+func _find_decor_target(center: Vector3) -> CollisionShape3D:
+	var query = PhysicsShapeQueryParameters3D.new()
+	var sphere = SphereShape3D.new()
+	sphere.radius = HIT_RADIUS
+	query.shape = sphere
+	query.transform = Transform3D(Basis(), center)
+	query.exclude = [get_rid()]
+	var best: CollisionShape3D = null
+	var best_dist := INF
+	for hit in get_world_3d().direct_space_state.intersect_shape(query, 16):
+		var body = hit.collider
+		if not (body is StaticBody3D) or body.name != "DecorBody":
+			continue
+		var col = body.shape_owner_get_owner(body.shape_find_owner(hit.shape))
+		if col is CollisionShape3D and col.has_meta("item") and not col.is_queued_for_deletion():
+			var d = col.global_position.distance_to(center)
+			if d < best_dist:
+				best_dist = d
+				best = col
+	return best
+
+## Affiche l'objet de la case sélectionnée dans la main droite de Zlorp (outils seulement).
+func _update_held_item():
+	var item = inventory.selected_item()
+	var wanted: PackedScene = null
+	if item and item.model and item.kind == ItemData.Kind.TOOL:
+		wanted = item.model
+	if held_model and held_model.get_meta("scene", null) == wanted:
+		return
+	if held_model:
+		held_model.queue_free()
+		held_model = null
+	if wanted:
+		held_model = wanted.instantiate()
+		held_model.set_meta("scene", wanted)
+		held_model.scale = Vector3.ONE * item.model_scale
+		hand_slot.add_child(held_model)
+
+func _hud_message(text: String, color: Color = Color.WHITE):
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud:
+		hud.show_message(text, color)
 
 ## Tourne caméra et Zlorp vers la direction dir (horizontale), ex. à la sortie d'un portail.
 func face(dir: Vector3):

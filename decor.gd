@@ -30,7 +30,7 @@ static func scatter(world: Node3D, data: WorldData, terrain: Node3D):
 		var rare_rng = RandomNumberGenerator.new()
 		rare_rng.seed = data.world_seed * 104729 + 7   # n'influence pas le placement du reste
 		_scatter_crystals(world, body, terrain, rare_rng, half, "RareCrystals", data.rare_crystal_count,
-			Families.CRYSTAL_COLORS[data.family], Families.crystal_item_id(data.family), 1.6, 1.3)
+			Families.CRYSTAL_COLORS[data.family], Families.crystal_item_id(data.family), 1.25, 1.3)
 
 # --- Rochers : sphères basse définition aplaties, à moitié enterrées ---
 static func _scatter_rocks(world, body, data, terrain, rng, half):
