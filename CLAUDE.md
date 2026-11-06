@@ -11,7 +11,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 ## Roadmap
 1. Fondations ✅ (terminée le 2026-11-05)
 2. Le Nexus : portails et téléportation ✅ (validée le 2026-11-05, extras de la branche `nuit` fusionnés le 2026-11-06)
-3. Gameplay : craft, inventaire, ennemis
+3. Gameplay : craft, inventaire, ennemis (décisions prises le 2026-11-06, plan en attente de validation)
 4. Vie du monde : événements, persistance, sauvegardes
 5. Multijoueur
 6. Polish
@@ -28,7 +28,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
 - Son de portail généré par le code (sfx.gd), aucun fichier audio
 - Travail de nuit (branche `nuit`, validée et fusionnée dans main le 2026-11-06, puis supprimée) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
-- Prochaine étape : Amine tranche PHASE3_QUESTIONS.md, puis plan de la phase 3
+- Prochaine étape : Amine valide le plan de la phase 3 (aucun code avant validation)
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
@@ -37,6 +37,18 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 4. ✅ Téléportation : Area3D, fondu, génération du monde destination (autre graine/ciel), joueur posé au sol près du portail retour, délai anti-boucle
 5. ✅ Ressource WorldData (graine, relief, couleurs, ciel, soleil) + MAJ CLAUDE.md
 Choix : on entre en marchant dans le portail (pas de touche), destination procédurale, pas de hub tant qu'il n'y a pas 3 mondes
+
+## Phase 3 : décisions de game design (détail dans PHASE3_QUESTIONS.md)
+- **Vision** : survie + construction + exploration multivers. **Règle d'or** : chaque mécanique sert la boucle principale. On simplifie le développement, pas la vision.
+- **Boucle** : portail → monde dangereux → récolter ses ressources propres → revenir construire la base → la base ouvre des mondes plus lointains.
+- **A. Boucle** : collection + fil rouge léger porté par la construction (pas de quête écrite). Mondes jetables en phase 3, permanents en phase 4.
+- **A3. Clés de portail** : clé = graine ; une même recette de ressources → toujours le même monde (partie fixe) ; ressources rares → mondes inconnus plus dangereux (mystère) ; la couleur/famille des ressources oriente la famille du monde ; **aperçu obligatoire** avant usage (couleur, danger). V1 : un seul portail (dans la base) + clés. Portails anciens/technologies : plus tard.
+- **B. Craft** : récolte à l'outil (frapper rochers/cristaux du décor) ; ressources de base partout + 1 rare par famille de monde ; recettes débloquées en trouvant un nouvel ingrédient ; objets simples partout, avancés sur établi. V1 : outils, clés de portail, constructions de base.
+- **C. Inventaire** : grille avec piles + barre rapide 1-9 ; à la mort, ressources transportées dans un sac récupérable sur place (coffres et constructions conservés) ; coffres à poser.
+- **D. Ennemis** : corps à corps simple ; générés depuis la graine (créatures propres à chaque famille de mondes) ; surtout la nuit ; ne traversent pas les portails ; IA adaptative plus tard.
+- **E. Général** : vie + endurance, interface classique, survie modérée.
+- **Plus tard** : PNJ, véhicules. Vaisseau = objectif de fin de jeu à long terme.
+- **Assets** : packs CC0 (Quaternius, Kenney…) téléchargés après accord d'Amine, licence notée dans CREDITS.md ; animations de Zlorp depuis Mixamo (Amine les télécharge, « Without Skin », sur le personnage Zlorp).
 
 ## Pièges Mixamo connus
 - Échelle : l'importeur FBX de Godot 4.6 convertit déjà les cm en mètres (Zlorp = 1,77 m en scale 1). Ne PAS mettre 0.01
