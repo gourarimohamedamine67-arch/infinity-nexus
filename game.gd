@@ -8,6 +8,7 @@ const ARRIVAL_COOLDOWN = 1.0   ## secondes pendant lesquelles un portail ne peut
 const ORIGIN_WORLD: WorldData = preload("res://worlds/origin.tres")
 const FALL_LIMIT = 15.0        ## sous le sol de plus de 15 m (bord du monde) -> retour au point d'arrivée
 const Sfx = preload("res://sfx.gd")
+const Families = preload("res://families.gd")
 
 @onready var world_root: Node3D = $World
 @onready var player: CharacterBody3D = $Player
@@ -44,6 +45,8 @@ func enter_world(seed_value: int, return_seed: int = -1):
 	place_player(arrival_spot)
 	player.face(arrival[1])
 	last_arrival_ms = Time.get_ticks_msec()
+	var d: WorldData = current_world.data
+	print("Arrivée : %s, famille %s, danger %d" % [d.display_name, Families.name_of(d.family), d.danger])
 
 ## Appelé par un portail quand le joueur entre dedans.
 func travel_through(portal: Node3D):

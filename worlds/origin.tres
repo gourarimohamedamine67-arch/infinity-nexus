@@ -5,7 +5,9 @@
 [resource]
 script = ExtResource("1_data")
 world_seed = 0
-display_name = "Origine"
+display_name = "Base"
+family = 4
+danger = 0
 amplitude = 6.0
 frequency = 0.02
 octaves = 3
@@ -24,5 +26,6 @@ star_density = 0.012
 weather = 0
 rock_count = 80
 crystal_count = 30
+rare_crystal_count = 0
 rock_color = Color(0.25, 0.22, 0.32, 1)
-crystal_color = Color(0.4, 0.85, 1, 1)
+crystal_color = Color(0.85, 0.85, 1, 1)
