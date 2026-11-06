@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://assets/kenney/survival/workbench.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"etabli"
+display_name = "Établi"
+short_name = "Éta"
+description = "À poser dans la base. Permet de fabriquer les objets avancés à proximité."
+kind = 2
+icon_color = Color(0.6, 0.45, 0.3, 1)
+max_stack = 5
+family = -1
+rarity = 0
+model = ExtResource("2_model")
+model_scale = 3.2
+tool_power = 0

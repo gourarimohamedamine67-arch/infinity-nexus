@@ -6,6 +6,7 @@
 script = ExtResource("1_item")
 id = &"cristal_givre"
 display_name = "Cristal de Givre"
+short_name = "Gi"
 description = "Cristal rare des mondes de la famille Givre. Oriente les clés de portail vers cette famille."
 kind = 0
 icon_color = Color(0.55, 0.95, 1, 1)

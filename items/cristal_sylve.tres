@@ -6,6 +6,7 @@
 script = ExtResource("1_item")
 id = &"cristal_sylve"
 display_name = "Cristal de Sylve"
+short_name = "Sy"
 description = "Cristal rare des mondes de la famille Sylve. Oriente les clés de portail vers cette famille."
 kind = 0
 icon_color = Color(0.35, 1, 0.35, 1)

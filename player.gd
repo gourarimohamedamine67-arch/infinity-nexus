@@ -39,6 +39,10 @@ const JUMP_ANIM = "zlorp/jump"
 const SWING_ANIM = "zlorp/swing"
 const HIPS_POS = "Skeleton3D:mixamorig1_Hips"
 const Items = preload("res://items.gd")
+const Recipes = preload("res://recipes.gd")
+const Placeables = preload("res://placeables.gd")
+const Sounds = preload("res://sounds.gd")
+const PLACE_DISTANCE = 2.2         # un objet posé l'est à 2,2 m devant Zlorp (étape 7 : aperçu + grille)
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -65,6 +69,7 @@ var swing_time := 0.0          # temps écoulé depuis le début du coup (s)
 var swing_hit_done := false
 var hand_slot: BoneAttachment3D   # main droite de Zlorp : l'objet tenu y est accroché
 var held_model: Node3D
+var discovered := {}           # objets déjà trouvés au moins une fois (débloquent les recettes)
 
 func _ready():
 	add_to_group("player")  # les portails reconnaissent le joueur par ce groupe
@@ -79,6 +84,7 @@ func _ready():
 	hand_slot.bone_name = "mixamorig1_RightHand"
 	zlorp.get_node("Skeleton3D").add_child(hand_slot)
 	inventory.changed.connect(_update_held_item)
+	inventory.item_added.connect(_on_item_added)
 	inventory.selected_changed.connect(func(_i): _update_held_item())
 
 # --- Préparation des animations ---
@@ -231,6 +237,10 @@ func _physics_process(delta):
 func _start_swing():
 	if swinging or jumping or not is_on_floor():
 		return
+	var selected = inventory.selected_item()
+	if selected and selected.kind == ItemData.Kind.PLACEABLE:
+		_place_selected(selected)   # objet à poser : le clic le pose au lieu de frapper
+		return
 	if not spend_stamina(SWING_COST):
 		_hud_message("Trop fatigué pour frapper", Color(1, 0.6, 0.3))
 		return
@@ -315,6 +325,59 @@ func _update_held_item():
 		held_model.set_meta("scene", wanted)
 		held_model.scale = Vector3.ONE * item.model_scale
 		hand_slot.add_child(held_model)
+
+# --- Fabrication ---
+
+## Nouvel objet trouvé : il peut débloquer des recettes.
+func _on_item_added(id: StringName, _count: int):
+	if discovered.has(id):
+		return
+	var before = Recipes.known(discovered).size()
+	discovered[id] = true
+	var unlocked = Recipes.known(discovered).size() - before
+	var item = Items.get_item(id)
+	if unlocked > 0:
+		_hud_message("Nouvel ingrédient : %s · %d nouvelle(s) recette(s) (Tab)" % [item.display_name, unlocked], Color(0.7, 1.0, 0.7))
+
+func is_near_workbench() -> bool:
+	return Placeables.near_workbench(get_tree(), global_position)
+
+## Fabrique une recette si possible. Renvoie vrai si c'est fait.
+func craft(recipe: RecipeData) -> bool:
+	if not Recipes.can_craft(recipe, inventory, is_near_workbench()):
+		return false
+	if not inventory.has_room_for(recipe.result, recipe.result_count):
+		_hud_message("Inventaire plein", Color(1, 0.4, 0.4))
+		return false
+	for id in recipe.ingredients:
+		inventory.remove(id, recipe.ingredients[id])
+	inventory.add(recipe.result, recipe.result_count)
+	var item = Items.get_item(recipe.result)
+	_hud_message("Fabriqué : %s" % item.display_name, Color(0.7, 1.0, 0.7))
+	var world = get_tree().get_first_node_in_group("world")
+	if world:
+		Sounds.play_at(world, global_position, "impactWood_light")
+	return true
+
+## Pose l'objet sélectionné devant Zlorp (version simple ; l'étape 7 ajoute aperçu, rotation et grille).
+func _place_selected(item: ItemData):
+	var world = get_tree().get_first_node_in_group("world")
+	if world == null:
+		return
+	var aim = -global_basis.z
+	aim.y = 0
+	aim = aim.normalized()
+	var spot = global_position + aim * PLACE_DISTANCE
+	var ground = get_tree().get_first_node_in_group("terrain")
+	if ground:
+		spot.y = ground.get_global_height(spot.x, spot.z)
+	var node = Placeables.create(item)
+	world.add_child(node)
+	node.global_position = spot
+	node.global_rotation.y = atan2(-aim.x, -aim.z)   # l'objet fait face à Zlorp
+	inventory.remove(item.id, 1)
+	Sounds.play_at(world, spot, "impactPlank_medium")
+	_hud_message("%s posé" % item.display_name)
 
 func _hud_message(text: String, color: Color = Color.WHITE):
 	var hud = get_tree().get_first_node_in_group("hud")

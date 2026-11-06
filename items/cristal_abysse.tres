@@ -6,6 +6,7 @@
 script = ExtResource("1_item")
 id = &"cristal_abysse"
 display_name = "Cristal d'Abysse"
+short_name = "Ab"
 description = "Cristal rare des mondes de la famille Abysse. Oriente les clés de portail vers cette famille."
 kind = 0
 icon_color = Color(0.2, 0.4, 1, 1)

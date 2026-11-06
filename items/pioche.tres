@@ -7,6 +7,7 @@
 script = ExtResource("1_item")
 id = &"pioche"
 display_name = "Pioche"
+short_name = "Pio"
 description = "Outil de base. Casse la pierre plus vite et permet d'extraire le quartz et les cristaux."
 kind = 1
 icon_color = Color(0.8, 0.5, 0.3, 1)

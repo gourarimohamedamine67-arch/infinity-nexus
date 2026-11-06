@@ -5,6 +5,7 @@ extends RefCounted
 
 signal changed                       ## le contenu a changé (l'interface se redessine)
 signal selected_changed(index: int)  ## une autre case de la barre rapide est sélectionnée
+signal item_added(id: StringName, count: int)   ## des objets sont entrés (récolte, fabrication…)
 
 const Items = preload("res://items.gd")
 const HOTBAR_SIZE = 9
@@ -31,6 +32,7 @@ func max_stack_of(id: StringName) -> int:
 
 ## Ajoute des objets (piles existantes d'abord, puis cases vides). Renvoie ce qui n'a pas pu rentrer.
 func add(id: StringName, count: int) -> int:
+	var requested = count
 	if Items.get_item(id) == null:
 		push_error("Objet inconnu : %s" % id)
 		return count
@@ -50,7 +52,20 @@ func add(id: StringName, count: int) -> int:
 			slots[i] = {"id": id, "count": put}
 			count -= put
 	changed.emit()
+	if count < requested:
+		item_added.emit(id, requested - count)
 	return count
+
+## Reste-t-il de la place pour count objets de ce type ?
+func has_room_for(id: StringName, count: int) -> bool:
+	var max_stack = max_stack_of(id)
+	var room = 0
+	for s in slots:
+		if s.is_empty():
+			room += max_stack
+		elif s.id == id:
+			room += max_stack - s.count
+	return room >= count
 
 ## Nombre total d'un objet dans l'inventaire.
 func count_of(id: StringName) -> int:

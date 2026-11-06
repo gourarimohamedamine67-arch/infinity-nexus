@@ -74,7 +74,7 @@ func refresh():
 	if item:
 		icon.color = item.icon_color
 		icon_texture.texture = item.icon
-		short_label.text = abbreviation(item.display_name)
+		short_label.text = item.short_name if item.short_name != "" else abbreviation(item.display_name)
 		count_label.text = str(s.count) if s.count > 1 else ""
 		tooltip_text = "%s\n%s" % [item.display_name, item.description]
 	else:

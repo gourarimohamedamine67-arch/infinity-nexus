@@ -6,6 +6,7 @@
 script = ExtResource("1_item")
 id = &"pierre"
 display_name = "Pierre"
+short_name = "Pie"
 description = "Ressource de base. On l'extrait des rochers, même à mains nues."
 kind = 0
 icon_color = Color(0.55, 0.52, 0.5, 1)

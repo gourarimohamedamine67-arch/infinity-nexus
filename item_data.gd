@@ -7,6 +7,7 @@ enum Kind { RESOURCE, TOOL, PLACEABLE, KEY }
 
 @export var id: StringName                 ## identifiant unique, ex. &"pierre"
 @export var display_name: String = ""
+@export var short_name: String = ""        ## abréviation affichée sur l'icône (2-4 lettres), ex. « Pio »
 @export_multiline var description: String = ""
 @export var kind: Kind = Kind.RESOURCE
 @export var icon_color: Color = Color.WHITE ## couleur de l'icône (en attendant de vraies icônes)
