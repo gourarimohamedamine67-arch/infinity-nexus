@@ -117,6 +117,7 @@ Choix d'Amine cochés `[x]`, précisions en **Décision**. Les options non reten
 - [ ] **Un petit bestiaire fixe** (3-5 types) qu'on retrouve partout.
 
 > **Décision** : chaque **famille de mondes** a ses créatures, leurs caractéristiques et leurs dangers.
+> Modèles : **personnages Mixamo** (mutants, créatures), recolorés et redimensionnés selon la famille (Quaternius abandonné : style cartoon incompatible avec Zlorp et l'ambiance sombre).
 
 ### D4. Où sont les ennemis ?
 - [ ] **Partout, en permanence.**

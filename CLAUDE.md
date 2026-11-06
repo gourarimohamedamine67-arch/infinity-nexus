@@ -11,7 +11,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 ## Roadmap
 1. Fondations ✅ (terminée le 2026-11-05)
 2. Le Nexus : portails et téléportation ✅ (validée le 2026-11-05, extras de la branche `nuit` fusionnés le 2026-11-06)
-3. Gameplay : craft, inventaire, ennemis (décisions prises le 2026-11-06, plan en attente de validation)
+3. Gameplay : craft, inventaire, ennemis (en cours, plan validé le 2026-11-06)
 4. Vie du monde : événements, persistance, sauvegardes
 5. Multijoueur
 6. Polish
@@ -28,7 +28,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
 - Son de portail généré par le code (sfx.gd), aucun fichier audio
 - Travail de nuit (branche `nuit`, validée et fusionnée dans main le 2026-11-06, puis supprimée) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
-- Prochaine étape : Amine valide le plan de la phase 3 (aucun code avant validation)
+- Prochaine étape : phase 3, voir le plan ci-dessous
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
@@ -48,7 +48,17 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 - **D. Ennemis** : corps à corps simple ; générés depuis la graine (créatures propres à chaque famille de mondes) ; surtout la nuit ; ne traversent pas les portails ; IA adaptative plus tard.
 - **E. Général** : vie + endurance, interface classique, survie modérée.
 - **Plus tard** : PNJ, véhicules. Vaisseau = objectif de fin de jeu à long terme.
-- **Assets** : packs CC0 (Quaternius, Kenney…) téléchargés après accord d'Amine, licence notée dans CREDITS.md ; animations de Zlorp depuis Mixamo (Amine les télécharge, « Without Skin », sur le personnage Zlorp).
+- **Assets** : packs Kenney CC0 (Survival Kit, Impact Sounds) dans `assets/kenney/`, licence dans CREDITS.md (tout nouvel asset y est noté). Animations de Zlorp et **créatures = personnages Mixamo** (mutants, créatures) téléchargés par Amine, recolorés/redimensionnés selon la famille (Quaternius abandonné : style cartoon).
+- **Choix confirmés** : la clé de portail est consommée à l'usage (la recette reste connue) ; la base = le monde d'origine (graine 0) ; touches E interagir, clic gauche frapper, B construction, Tab inventaire.
+- **Clic gauche** : frappe seulement si la souris est capturée et aucun menu ouvert ; sinon il reprend la souris (après Échap) ou agit dans l'interface. Souris libre tant que l'inventaire est ouvert.
+
+## Phase 3 : plan validé
+Rythme : blocs 1-3 enchaînés (un commit par étape, pause test à la fin de chaque bloc) ; blocs 4-5 : pause après chaque étape.
+- Bloc 1 : 0. assets + CREDITS.md · 1. familles de mondes (Braise, Sylve, Abysse, Givre, Arcane, Ombre) + danger 1-5 + ressources (Pierre, Quartz, Cristal de famille) en `ItemData` · 2. inventaire 24 cases (piles 99) + barre rapide 1-9 · 3. vie + endurance + HUD + bandeau d'arrivée
+- Bloc 2 : 4. récolte (clic gauche, anim Mining, PV des rochers/cristaux, pioche requise pour les cristaux) · 5. craft (recettes `.tres` débloquées par nouvel ingrédient ; simples partout, avancées près d'un établi)
+- Bloc 3 : 6. base persistante pendant la session (monde d'origine gardé en mémoire) · 7. construction (aperçu vert/rouge, R pour tourner, grille) · 8. coffres
+- Bloc 4 : 9. clés de portail (graine = recette, famille = cristal dominant, danger = rareté) + socle avec aperçu · 10. Stabilisateur (débloque les dangers 3-5)
+- Bloc 5 : 11. créatures Mixamo + combat · 12. apparition surtout la nuit selon le danger · 13. mort + sac récupérable · 14. boucle complète + équilibrage
 
 ## Pièges Mixamo connus
 - Échelle : l'importeur FBX de Godot 4.6 convertit déjà les cm en mètres (Zlorp = 1,77 m en scale 1). Ne PAS mettre 0.01
@@ -82,6 +92,7 @@ Choix : on entre en marchant dans le portail (pas de touche), destination procé
 - `terrain.gd` (@tool) : exports world_seed, size (160), resolution (80), rim_width/rim_height (crêtes du bord), amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` = hauteur locale, `get_global_height(x, z)` = y global du sol, `get_playable_half_size()` = zone sans les crêtes. Murs invisibles (`Bounds`) créés en jeu seulement. Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde). Couleurs de sommets en sRGB (`vertex_color_is_srgb`, sinon délavées) et dégradé creux→sommets en teinte HSV (un mélange RGB de couleurs opposées passe par le gris)
 - `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans player.tscn)
 - `assets/characters/` : Idle.fbx (modèle + skin), Walking/Running/Jumping/Running Jump.fbx (animations)
+- `assets/kenney/survival/` (GLB, très petits : mur 0,5 m → ×4 pour la construction, coffre/établi ×3) et `assets/kenney/sounds/` (.ogg). Les GLB pointent vers `Textures/colormap.png` à côté d'eux
 - Git LFS suit *.fbx et *.png (.gitattributes). GitHub refuse les fichiers > 100 Mo hors LFS
 - Si des .fbx/.png font ~130 octets, ce sont des pointeurs LFS : lancer `git lfs checkout` (sinon Godot écrit valid=false dans les .import)
 - Godot 4.6.2 : C:/Users/goura/Downloads/Godot_v4.6.2-stable_win64.exe/ (dossier ; le _console.exe sert pour --headless)
