@@ -10,7 +10,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 
 ## Roadmap
 1. Fondations ✅ (terminée le 2026-11-05)
-2. Le Nexus : portails et téléportation ✅ (validée le 2026-11-05 ; branche `nuit` en test)
+2. Le Nexus : portails et téléportation ✅ (validée le 2026-11-05, extras de la branche `nuit` fusionnés le 2026-11-06)
 3. Gameplay : craft, inventaire, ennemis
 4. Vie du monde : événements, persistance, sauvegardes
 5. Multijoueur
@@ -27,7 +27,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Portail Nexus : aller-retour entre le monde d'origine et des mondes procéduraux (graine), fondu au noir
 - Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
 - Son de portail généré par le code (sfx.gd), aucun fichier audio
-- Branche `nuit` (travail de nuit du 2026-11-05, en attente de test/fusion par Amine) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
+- Travail de nuit (branche `nuit`, validée et fusionnée dans main le 2026-11-06, puis supprimée) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
 - Prochaine étape : Amine tranche PHASE3_QUESTIONS.md, puis plan de la phase 3
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
