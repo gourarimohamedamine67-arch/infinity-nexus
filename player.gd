@@ -25,6 +25,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var anim_player: AnimationPlayer = $zlorp/AnimationPlayer
 
 var camera_x_rotation := 0.0   # inclinaison verticale de la caméra (radians)
+var inventory := Inventory.new()   # porté par le joueur : persiste d'un monde à l'autre
+var controls_enabled := true   # faux quand un menu est ouvert (inventaire…)
 var jumping := false
 var jump_start_time := 0.0     # moment de l'anim où Zlorp est le plus accroupi (impulsion)
 var jump_anim_speed := 1.0     # vitesse pour caler le sommet de l'anim sur le sommet du saut
@@ -107,15 +109,29 @@ func _compute_jump_timing(anim: Animation):
 
 # --- Contrôles ---
 
-func _input(event):
-	# Clic dans la fenêtre : on reprend la souris
-	if event is InputEventMouseButton and event.pressed \
-			and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+# Les menus (hud.gd) reçoivent les événements en premier : un clic ou Échap qu'ils
+# utilisent n'arrive jamais ici. Règles de la souris :
+#   - menu ouvert : souris libre, le joueur ne réagit à rien ;
+#   - souris libérée (Échap) sans menu : un clic la reprend, SANS frapper ;
+#   - souris capturée sans menu : le clic gauche est l'action « attack » (frapper, étape 4).
+
+func _hud_menu_open() -> bool:
+	var hud = get_tree().get_first_node_in_group("hud")
+	return hud != null and hud.is_menu_open()
+
+func _unhandled_input(event):
+	if _hud_menu_open():
 		return
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	# La caméra ne tourne que si la souris est capturée
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.pressed \
+			and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)   # ce clic sert seulement à reprendre la souris
+		get_viewport().set_input_as_handled()
+
+func _input(event):
+	# La caméra ne tourne que si la souris est capturée (donc jamais avec un menu ouvert)
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		camera_x_rotation -= event.relative.y * MOUSE_SENSITIVITY
@@ -127,12 +143,14 @@ func _physics_process(delta):
 		velocity.y -= gravity * delta
 	elif jumping and velocity.y <= 0.0:
 		jumping = false  # réception au sol
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	if controls_enabled and Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 		jumping = true
 		anim_player.play(JUMP_ANIM, 0.1, jump_anim_speed)
 		anim_player.seek(jump_start_time, true)
-	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_dir = Vector2.ZERO
+	if controls_enabled:
+		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	var running = direction != Vector3.ZERO and Input.is_action_pressed("sprint")
 	if direction:

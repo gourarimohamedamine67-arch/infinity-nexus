@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="PackedScene" path="res://player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://ui/hud.gd" id="3_hud"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -9,6 +10,9 @@ script = ExtResource("1_game")
 [node name="World" type="Node3D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("3_hud")
 
 [node name="Fade" type="CanvasLayer" parent="."]
 layer = 10

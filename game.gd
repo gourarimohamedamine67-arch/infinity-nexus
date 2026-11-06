@@ -27,6 +27,9 @@ func _ready():
 	portal_sound.stream = Sfx.portal_whoosh()  # son généré par le code, aucun fichier
 	portal_sound.volume_db = -4.0
 	add_child(portal_sound)
+	# Interface : barre rapide + inventaire ; un menu ouvert coupe les contrôles du joueur
+	$HUD.setup(player)
+	$HUD.menu_toggled.connect(func(open): player.controls_enabled = not open)
 	fade_rect.color.a = 1.0  # on démarre au noir...
 	enter_world(0)
 	fade_in()                # ...puis on révèle le monde
