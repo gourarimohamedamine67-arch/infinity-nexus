@@ -28,7 +28,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
 - Son de portail généré par le code (sfx.gd), aucun fichier audio
 - Travail de nuit (branche `nuit`, validée et fusionnée dans main le 2026-11-06, puis supprimée) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
-- Prochaine étape : phase 3, voir le plan ci-dessous
+- Phase 3 : bloc 1 fait (étapes 0-3 : assets Kenney, familles/danger/ressources, inventaire + barre rapide, vie/endurance/HUD) ; prochaine étape : bloc 2 (récolte, craft)
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
@@ -84,10 +84,15 @@ Rythme : blocs 1-3 enchaînés (un commit par étape, pause test à la fin de ch
 - `portal.tscn` / `portal.gd` : Portal → Ring (TorusMesh émissif), Swirl (QuadMesh + `portal_swirl.gdshader`), Particles, OmniLight3D, TriggerZone (Area3D → game.travel_through). `destination_seed` = monde visé. Origine = base au sol, centre de l'anneau à 1,6 m, face vers +Z. Se pose seul sur le terrain (`snap_to_ground`)
 - `player.tscn` : Player → zlorp, capsule, SpringArm3D/Camera3D
 - `player.gd` : déplacement (actions move_forward/back/left/right, sprint, jump), course 8 m/s (anim Running ×1,3), saut, caméra souris, animations Zlorp
-- Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches
+- Touches en physical_keycode : ZQSD sur AZERTY, WASD sur QWERTY, + flèches ; Shift course, Espace saut, Tab inventaire, E interagir, clic gauche frapper, B construction, 1-9/molette barre rapide
 - `sky.gdshader` : ciel jour/nuit (uniforms day_*/night_*, night, moon_dir, star_density) ; la lune (DirectionalLight3D) est en `SKY_MODE_LIGHT_ONLY` pour ne pas être dessinée comme un 2e soleil
 - `weather.gd` : GPUParticles3D pluie/neige qui suit le joueur (local_coords = false), enum Kind
 - `decor.gd` : `scatter(world, data, terrain)` → MultiMesh « Rocks » et « Crystals » + StaticBody3D « DecorBody » (cylindres, pas de collision mise à l'échelle). Max ~220 objets. Rien à moins de 7 m du segment (0,0)→(0,-10)
+- `families.gd` : 6 familles (enum Family, NAMES, HUE_RANGES, CRYSTAL_COLORS), `from_hue()`, `random_hue()`, `crystal_item_id()`
+- `item_data.gd` (class_name ItemData) + `items/*.tres` (un fichier par objet) + registre `items.gd` (`Items.get_item(&"pierre")`, `Items.all()`)
+- `inventory.gd` (class_name Inventory) : 33 cases (0-8 barre rapide, 9-32 sac), piles 99 ; `add()` renvoie le surplus, `remove()` tout ou rien, `move()` fusionne/échange ; porté par le Player (`player.inventory`)
+- `ui/hud.gd` (CanvasLayer, groupe "hud") : barre rapide, inventaire (Tab), barres Vie/Endurance, bandeau `show_arrival(data)` ; `is_menu_open()`, signal `menu_toggled` ; F1 = ressources de debug ; `ui/slot_ui.gd` = une case (glisser-déposer)
+- Player : `health`/`stamina`, `take_damage()`, `heal()`, `spend_stamina()` (faux si pas assez), signaux `health_changed`, `stamina_changed`, `died` ; `controls_enabled` (faux si menu ouvert) ; actions de jeu en `_unhandled_input`
 - `sfx.gd` : sons synthétisés (`portal_whoosh()` → AudioStreamWAV), chargé par `preload` (pas de class_name)
 - `terrain.gd` (@tool) : exports world_seed, size (160), resolution (80), rim_width/rim_height (crêtes du bord), amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` = hauteur locale, `get_global_height(x, z)` = y global du sol, `get_playable_half_size()` = zone sans les crêtes. Murs invisibles (`Bounds`) créés en jeu seulement. Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde). Couleurs de sommets en sRGB (`vertex_color_is_srgb`, sinon délavées) et dégradé creux→sommets en teinte HSV (un mélange RGB de couleurs opposées passe par le gris)
 - `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans player.tscn)
@@ -100,5 +105,6 @@ Rythme : blocs 1-3 enchaînés (un commit par étape, pause test à la fin de ch
 - Ne jamais tuer Godot par nom de processus (`taskkill /IM`) : ça fermerait aussi l'éditeur d'Amine. Toujours mettre un `timeout` aux tests headless
 - Avertissements GDScript : interroger le LSP de l'éditeur ouvert (port 6005, textDocument/didOpen → publishDiagnostics)
 - En headless, le rendu factice ne garde pas les transforms des MultiMesh (tout à l'origine) : tester le décor avec rendu (sans --headless)
+- Tests d'interface/souris : lancer AVEC fenêtre (le headless ne gère pas la capture de la souris), injecter les événements avec `Input.parse_input_event`
 - Mesurer le FPS avec `DisplayServer.window_set_vsync_mode(VSYNC_DISABLED)`, sinon plafonné/faussé. Référence 1280×720 GPU intégré AMD : ~70 FPS jour, ~90 FPS nuit
 - Scripts utilitaires sans class_name (sfx, weather, decor) : chargés par `preload`, pas besoin de --import
