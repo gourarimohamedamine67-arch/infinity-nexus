@@ -28,7 +28,7 @@ Repo GitHub : gourarimohamedamine67-arch/infinity-nexus
 - Bords : terrain de 160 m dont les 18 derniers mètres remontent en crêtes (+14 m) + murs invisibles ; filet de sécurité si chute de plus de 15 m
 - Son de portail généré par le code (sfx.gd), aucun fichier audio
 - Travail de nuit (branche `nuit`, validée et fusionnée dans main le 2026-11-06, puis supprimée) : course, bords, son, nettoyage, décor, PHASE3_QUESTIONS.md
-- Phase 3 : bloc 1 fait (étapes 0-3 : assets Kenney, familles/danger/ressources, inventaire + barre rapide, vie/endurance/HUD) ; prochaine étape : bloc 2 (récolte, craft)
+- Phase 3 : blocs 1 et 2 faits (assets, familles/danger/ressources, inventaire, vie/endurance/HUD, récolte, craft) ; prochaine étape : bloc 3 (base persistante, construction, coffres)
 
 ## Phase 2 : plan validé (une étape = un commit, pause test dans Godot entre chaque)
 1. ✅ Terrain paramétrable (FastNoiseLite, graine)
@@ -93,10 +93,15 @@ Rythme : blocs 1-3 enchaînés (un commit par étape, pause test à la fin de ch
 - `inventory.gd` (class_name Inventory) : 33 cases (0-8 barre rapide, 9-32 sac), piles 99 ; `add()` renvoie le surplus, `remove()` tout ou rien, `move()` fusionne/échange ; porté par le Player (`player.inventory`)
 - `ui/hud.gd` (CanvasLayer, groupe "hud") : barre rapide, inventaire (Tab), barres Vie/Endurance, bandeau `show_arrival(data)` ; `is_menu_open()`, signal `menu_toggled` ; F1 = ressources de debug ; `ui/slot_ui.gd` = une case (glisser-déposer)
 - Player : `health`/`stamina`, `take_damage()`, `heal()`, `spend_stamina()` (faux si pas assez), signaux `health_changed`, `stamina_changed`, `died` ; `controls_enabled` (faux si menu ouvert) ; actions de jeu en `_unhandled_input`
+- Récolte : clic gauche = coup (anim Attack_Downward jouée de 0,15 à 1,4 s à ×1,4, impact à 0,54 s), Zlorp se tourne vers la caméra ; `player._find_decor_target()` (sphère devant Zlorp) → `world.hit_decor(col, dégâts, puissance)` ; règles dans `world.gd` HARVEST (pierre 6 PV main nue OK, quartz/cristaux 6/9 PV pioche requise) ; main nue 1 dégât, outil = puissance × 3
+- `recipe_data.gd` (class_name RecipeData) + `recipes/*.tres` + registre `recipes.gd` (`known(discovered)`, `can_craft()`) ; recette connue quand tous ses ingrédients ont été trouvés (`player.discovered`) ; `player.craft(recipe)`
+- `placeables.gd` : `create(item)` → StaticBody3D (modèle + boîte ajustée), groupes "placed" (+ "workbench" pour l'établi) ; `near_workbench()` (3,5 m). Clic avec un objet PLACEABLE sélectionné = le poser (version simple, l'étape 7 ajoute l'aperçu)
+- `sounds.gd` : `Sounds.play_at(parent, pos, "impactMining")` (variante au hasard parmi 5)
+- ItemData : `short_name` (abréviation sur l'icône), `model`, `model_scale` (outils ~3,5, établi/coffre ~3,2), `tool_power`
 - `sfx.gd` : sons synthétisés (`portal_whoosh()` → AudioStreamWAV), chargé par `preload` (pas de class_name)
 - `terrain.gd` (@tool) : exports world_seed, size (160), resolution (80), rim_width/rim_height (crêtes du bord), amplitude, frequency, octaves, color_low/high ; `get_height(x, z)` = hauteur locale, `get_global_height(x, z)` = y global du sol, `get_playable_half_size()` = zone sans les crêtes. Murs invisibles (`Bounds`) créés en jeu seulement. Le mesh n'est pas sauvegardé dans la .tscn (vidé avant chaque sauvegarde). Couleurs de sommets en sRGB (`vertex_color_is_srgb`, sinon délavées) et dégradé creux→sommets en teinte HSV (un mélange RGB de couleurs opposées passe par le gris)
 - `zlorp.tscn` : instance de `assets/characters/Idle.fbx` (racine nommée "Idle", renommée "zlorp" dans player.tscn)
-- `assets/characters/` : Idle.fbx (modèle + skin), Walking/Running/Jumping/Running Jump.fbx (animations)
+- `assets/characters/` : Idle.fbx (modèle + skin) ; animations Walking, Running, Jumping, Running Jump, Attack_Downward (pioche), Attack_Horizontal, Hit_Reaction, Dying, Dodge (recule de 2,2 m), Picking_Up (9,6 s : plusieurs gestes) — toutes vérifiées : 49 os identiques à Zlorp
 - `assets/kenney/survival/` (GLB, très petits : mur 0,5 m → ×4 pour la construction, coffre/établi ×3) et `assets/kenney/sounds/` (.ogg). Les GLB pointent vers `Textures/colormap.png` à côté d'eux
 - Git LFS suit *.fbx et *.png (.gitattributes). GitHub refuse les fichiers > 100 Mo hors LFS
 - Si des .fbx/.png font ~130 octets, ce sont des pointeurs LFS : lancer `git lfs checkout` (sinon Godot écrit valid=false dans les .import)
